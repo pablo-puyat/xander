@@ -1,0 +1,7 @@
+# Example comic files to process
+# Format: Series (Year) #Issue.ext or Publisher - Series (Year) #Issue.ext
+
+Batman (2016) #001.cbz
+DC Comics - The Flash (2016) #001.cbr
+Amazing Spider-Man Vol. 5 (2018) #001.cbz
+Daredevil (2019) #001.cbz

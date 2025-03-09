@@ -1,0 +1,149 @@
+package cmd
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"xander/internal/comicvine"
+)
+
+var (
+	comicInputFile string
+	comicOutputFormat string
+)
+
+var comicCmd = &cobra.Command{
+	Use:   "comic [filenames]",
+	Short: "Get metadata for comic files",
+	Long: `Get metadata for files with comic-like filenames using ComicVine API.
+Files can be provided as arguments or read from a file using the --input flag.
+Filenames should follow format: "Series (Year) #Issue" or "Publisher - Series (Year) #Issue".`,
+	Run: runComicCmd,
+}
+
+func init() {
+	rootCmd.AddCommand(comicCmd)
+
+	comicCmd.Flags().StringVar(
+		&comicInputFile,
+		"input",
+		"",
+		"path to a file containing a list of comic files (one per line)",
+	)
+
+	comicCmd.Flags().StringVar(
+		&comicOutputFormat,
+		"format",
+		"text",
+		"output format (text or json)",
+	)
+}
+
+func runComicCmd(cmd *cobra.Command, args []string) {
+	// Check if API key is configured
+	if cfg.ComicVineAPIKey == "" {
+		fmt.Println("ComicVine API key not set. Please set it in the config file or environment.")
+		fmt.Println("You can get an API key from https://comicvine.gamespot.com/api/")
+		return
+	}
+
+	var filenames []string
+
+	// Get filenames from input file if provided
+	if comicInputFile != "" {
+		file, err := os.Open(comicInputFile)
+		if err != nil {
+			fmt.Printf("Error opening input file: %v\n", err)
+			return
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			filename := strings.TrimSpace(scanner.Text())
+			if filename != "" && !strings.HasPrefix(filename, "#") {
+				filenames = append(filenames, filename)
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			fmt.Printf("Error reading input file: %v\n", err)
+			return
+		}
+	}
+
+	// Add filenames from command line arguments
+	filenames = append(filenames, args...)
+
+	if len(filenames) == 0 {
+		fmt.Println("No files provided. Please provide files as arguments or use --input flag.")
+		return
+	}
+
+	// Create the service
+	service := comicvine.NewComicService(cfg.ComicVineAPIKey)
+
+	// Get metadata
+	results, err := service.GetMetadataForFiles(filenames)
+	if err != nil {
+		fmt.Printf("Error getting metadata: %v\n", err)
+		return
+	}
+
+	// Output results
+	if comicOutputFormat == "json" {
+		outputJSON(results)
+	} else {
+		outputText(results)
+	}
+}
+
+func outputText(results []*comicvine.Result) {
+	fmt.Printf("Found metadata for %d comics:\n\n", len(results))
+	
+	for _, result := range results {
+		fmt.Printf("File: %s\n", result.Filename)
+		fmt.Printf("Series: %s\n", result.Series)
+		fmt.Printf("Issue: %s\n", result.Issue)
+		fmt.Printf("Year: %s\n", result.Year)
+		if result.Publisher != "" {
+			fmt.Printf("Publisher: %s\n", result.Publisher)
+		}
+		fmt.Printf("ComicVine ID: %d\n", result.ComicVineID)
+		fmt.Printf("Title: %s\n", result.Title)
+		fmt.Printf("Cover URL: %s\n", result.CoverURL)
+		if result.Description != "" {
+			fmt.Printf("Description: %s\n", result.Description)
+		}
+		fmt.Println()
+	}
+}
+
+func outputJSON(results []*comicvine.Result) {
+	// Using the json package would be better, but for simplicity
+	// we'll just manually construct a JSON string
+	fmt.Println("[")
+	for i, result := range results {
+		fmt.Printf("  {\n")
+		fmt.Printf("    \"filename\": %q,\n", result.Filename)
+		fmt.Printf("    \"series\": %q,\n", result.Series)
+		fmt.Printf("    \"issue\": %q,\n", result.Issue)
+		fmt.Printf("    \"year\": %q,\n", result.Year)
+		fmt.Printf("    \"publisher\": %q,\n", result.Publisher)
+		fmt.Printf("    \"comicvine_id\": %d,\n", result.ComicVineID)
+		fmt.Printf("    \"title\": %q,\n", result.Title)
+		fmt.Printf("    \"cover_url\": %q,\n", result.CoverURL)
+		fmt.Printf("    \"description\": %q\n", result.Description)
+		fmt.Printf("  }")
+		
+		if i < len(results)-1 {
+			fmt.Println(",")
+		} else {
+			fmt.Println()
+		}
+	}
+	fmt.Println("]")
+}
