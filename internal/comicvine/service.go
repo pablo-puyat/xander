@@ -63,16 +63,24 @@ func (s *ComicService) GetMetadata(filename string) (*Result, error) {
 // GetMetadataForFiles processes multiple files and returns their metadata
 func (s *ComicService) GetMetadataForFiles(filenames []string) ([]*Result, error) {
 	var results []*Result
+	var errors []string
 
 	for _, filename := range filenames {
 		result, err := s.GetMetadata(filename)
 		if err != nil {
 			// Log error but continue with other files
-			fmt.Printf("Error processing %s: %v\n", filename, err)
+			errorMsg := fmt.Sprintf("Error processing %s: %v", filename, err)
+			fmt.Println(errorMsg)
+			errors = append(errors, errorMsg)
 			continue
 		}
 
 		results = append(results, result)
+	}
+
+	// Only return error if no results were found
+	if len(results) == 0 && len(errors) > 0 {
+		return nil, fmt.Errorf("failed to process any files: %s", strings.Join(errors, "; "))
 	}
 
 	return results, nil

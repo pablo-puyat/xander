@@ -9,8 +9,7 @@ import (
 
 // Common errors
 var (
-	ErrNotComicFile     = errors.New("not a comic file")
-	ErrInvalidFilename  = errors.New("invalid comic filename format")
+	ErrInvalidFilename = errors.New("invalid comic filename format")
 )
 
 // IsComicFile checks if the filename has a comic file extension
@@ -20,7 +19,7 @@ func IsComicFile(filename string) bool {
 }
 
 // ParseComicFilename extracts series, issue, year, and publisher information from a filename
-// This function accepts any filename regardless of extension
+// This function accepts any string that follows comic naming patterns regardless of extension
 func ParseComicFilename(filename string) (series, issue, year, publisher string, err error) {
 	// Remove the extension (if any)
 	baseFilename := strings.TrimSuffix(filename, filepath.Ext(filename))
