@@ -61,7 +61,7 @@ export XANDER_TVDB_API_KEY=your-api-key
 
 ### Comic Metadata
 
-Get metadata for files with comic-like filenames using the ComicVine API:
+Get metadata for files with comic-like filenames using the ComicVine API (any file extension is supported):
 
 ```bash
 # Process a single file

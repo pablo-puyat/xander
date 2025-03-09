@@ -17,10 +17,11 @@ var (
 
 var comicCmd = &cobra.Command{
 	Use:   "comic [filenames]",
-	Short: "Get metadata for comic files",
+	Short: "Get comic metadata for files",
 	Long: `Get metadata for files with comic-like filenames using ComicVine API.
 Files can be provided as arguments or read from a file using the --input flag.
-Filenames should follow format: "Series (Year) #Issue" or "Publisher - Series (Year) #Issue".`,
+Filenames should follow format: "Series (Year) #Issue" or "Publisher - Series (Year) #Issue".
+File extensions are ignored, so any file that follows the naming pattern can be processed.`,
 	Run: runComicCmd,
 }
 
