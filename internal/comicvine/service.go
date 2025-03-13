@@ -2,18 +2,22 @@ package comicvine
 
 import (
 	"fmt"
+	"log"
+	"strings"
 	"xander/internal/parse"
 )
 
 // ComicService represents a service for comic metadata operations
 type ComicService struct {
 	client *Client
+	verbose bool
 }
 
 // NewComicService creates a new comic service
-func NewComicService(apiKey string) *ComicService {
+func NewComicService(apiKey string, verbose bool) *ComicService {
 	return &ComicService{
-		client: NewClient(apiKey),
+		client: NewClient(apiKey, verbose),
+		verbose: verbose,
 	}
 }
 
@@ -35,13 +39,28 @@ func (s *ComicService) GetMetadata(filename string) (*Result, error) {
 	// Extract info from the filename
 	series, issue, year, publisher, err := parse.ParseComicFilename(filename)
 	if err != nil {
+		if s.verbose {
+			log.Printf("Failed to parse filename '%s': %v", filename, err)
+		}
 		return nil, fmt.Errorf("failed to parse filename: %w", err)
+	}
+
+	if s.verbose {
+		log.Printf("Parsed '%s' as Series='%s', Issue='%s', Year='%s', Publisher='%s'", 
+			filename, series, issue, year, publisher)
 	}
 
 	// Get issue from ComicVine
 	comicInfo, err := s.client.GetIssue(series, issue)
 	if err != nil {
+		if s.verbose {
+			log.Printf("Failed to get issue from ComicVine for '%s' #%s: %v", series, issue, err)
+		}
 		return nil, fmt.Errorf("failed to get issue from ComicVine: %w", err)
+	}
+
+	if s.verbose {
+		log.Printf("Successfully retrieved metadata for '%s' #%s", series, issue)
 	}
 
 	// Create the result

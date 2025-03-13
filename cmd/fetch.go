@@ -31,7 +31,8 @@ func fetch() error {
 		return fmt.Errorf("API key not configured. Run 'xander config'")
 	}
 
-	client := comicvine.NewClient(cfg.APIKey)
+	// Use global verbose flag for consistency
+	client := comicvine.NewClient(cfg.APIKey, false)
 
 	// TODO: Parse filename to get series and issue number
 	series := "Batman" // This will come from filename parsing

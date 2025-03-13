@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 var (
 	comicInputFile string
 	comicOutputFormat string
+	comicVerbose bool
 )
 
 var comicCmd = &cobra.Command{
@@ -20,7 +22,19 @@ var comicCmd = &cobra.Command{
 	Short: "Get comic metadata for files",
 	Long: `Get metadata for files with comic-like filenames using ComicVine API.
 Files can be provided as arguments or read from a file using the --input flag.
-Filenames should follow format: "Series (Year) #Issue" or "Publisher - Series (Year) #Issue".
+Filenames should follow one of these formats:
+  - "Series (Year) #Issue" 
+  - "Publisher - Series (Year) #Issue"
+  - "Series (Year) (digital) (Group)"
+  - "Series 001 (Year) (digital) (Group)"
+  - "Series - Title 000 (Year) (digital) (Group)"
+  - "Series v01 - Title (Year) (digital) (Group)"
+  - "Series 01 (of 08) (Year) (digital) (Group)"
+  - "YYYY-MM - Title (digital) (Group)"
+  - "YYYY (Year) (digital) (Group)"
+  - "Series.Title.Month.Year.Format.Group"
+  - "Series 001"
+  
 File extensions are ignored, so any file that follows the naming pattern can be processed.`,
 	Run: runComicCmd,
 }
@@ -41,13 +55,26 @@ func init() {
 		"text",
 		"output format (text or json)",
 	)
+	
+	comicCmd.Flags().BoolVar(
+		&comicVerbose,
+		"verbose",
+		false,
+		"enable verbose API logging",
+	)
 }
 
 func runComicCmd(cmd *cobra.Command, args []string) {
+	// Set up logging if verbose mode is enabled
+	if comicVerbose {
+		log.SetOutput(os.Stdout)
+		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+		log.Println("Verbose mode enabled")
+	}
+	
 	// Check if API key is configured
 	if cfg.ComicVineAPIKey == "" {
-		fmt.Println("ComicVine API key not set. Please set it in the config file or environment.")
-		fmt.Println("You can get an API key from https://comicvine.gamespot.com/api/")
+		fmt.Println("ComicVine API key not set. Please configure it first.")
 		return
 	}
 
@@ -85,7 +112,7 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 	}
 
 	// Create the service
-	service := comicvine.NewComicService(cfg.ComicVineAPIKey)
+	service := comicvine.NewComicService(cfg.ComicVineAPIKey, comicVerbose)
 
 	// Get metadata
 	results, err := service.GetMetadataForFiles(filenames)
