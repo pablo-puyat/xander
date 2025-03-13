@@ -9,6 +9,8 @@ Xander is a CLI application for retrieving metadata for media files from various
 - **Flexible Parsing**: Works with various filename formats with or without extensions
 - **Multiple Input Methods**: Process individual files or batch process from a text file
 - **Configurable Output**: Choose between text and JSON output formats
+- **API Rate Limiting**: Respects ComicVine's 200 requests/hour limit to prevent throttling
+- **Response Caching**: Caches API responses for 24 hours to improve performance
 
 ## Installation
 
@@ -75,6 +77,9 @@ Get metadata for files with comic-like filenames using the ComicVine API (any fi
 
 # Output in JSON format
 ./xander comic --input examples/comics.txt --format json
+
+# Enable verbose logging to debug API communication
+./xander comic "Wonder Woman 013 (2024)" --verbose
 ```
 
 ### Using Input Files
@@ -95,13 +100,39 @@ Amazing Spider-Man Vol. 5 (2018) #001.cbz
 Supported comic filename formats (extension is optional):
 - `Series (Year) #Issue`
 - `Publisher - Series (Year) #Issue`
+- `Series (Year) (digital) (Group)`
+- `Series 001 (Year) (digital) (Group)`
+- `Series - Title 000 (Year) (digital) (Group)`
+- `Series v01 - Title (Year) (digital) (Group)`
+- `Series 01 (of 08) (Year) (digital) (Group)`
+- `YYYY-MM - Title (digital) (Group)`
+- `YYYY (Year) (digital) (Group)`
+- `Series.Title.Month.Year.Format.Group`
+- `Series 001`
 
 Examples:
 - `Batman (2016) #001`
 - `DC Comics - The Flash (2016) #001`
 - `Amazing Spider-Man Vol. 5 (2018) #001`
+- `Absolute Batman 001 (2024) (Webrip) (The Last Kryptonian-DCP).cbr`
+- `Ultimate X-Men 007 (2024) (Digital) (Shan-Empire).cbz`
+- `G.I. Joe - Cobra v01 (2009) (Minutemen-DarthTremens) (RC).cbz`
+- `Jim Henson's Labyrinth 01 (of 08) (2024) (digital) (Son of Ultron-Empire).cbr`
 
 Note: The parser ignores file extensions, so it can process files with any extension or no extension at all.
+
+## API Rate Limiting
+
+Xander respects the ComicVine API guidelines:
+- 200 requests per hour limit
+- Prevents velocity detection by adding small delays between requests
+- Caches responses for 24 hours to reduce API calls
+- Handles rate limit errors gracefully
+
+When the `--verbose` flag is used, you'll see detailed information about:
+- Rate limit status (current request count and reset time)
+- Cache usage (hits, misses, and expiration times)
+- API requests and responses
 
 ## Development
 
