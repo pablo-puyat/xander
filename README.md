@@ -11,6 +11,8 @@ Xander is a CLI application for retrieving metadata for media files from various
 - **Configurable Output**: Choose between text and JSON output formats
 - **API Rate Limiting**: Respects ComicVine's 200 requests/hour limit to prevent throttling
 - **Response Caching**: Caches API responses for 24 hours to improve performance
+- **Database Storage**: Save and query metadata in a local SQLite database
+- **Export/Import**: Export database contents to JSON and import from JSON files
 
 ## Installation
 
@@ -80,6 +82,9 @@ Get metadata for files with comic-like filenames using the ComicVine API (any fi
 
 # Enable verbose logging to debug API communication
 ./xander comic "Wonder Woman 013 (2024)" --verbose
+
+# Store results in the local database
+./xander comic --input examples/comics.txt --save
 ```
 
 ### Using Input Files
@@ -121,6 +126,34 @@ Examples:
 
 Note: The parser ignores file extensions, so it can process files with any extension or no extension at all.
 
+## Database Features
+
+Xander includes a built-in SQLite database for storing and querying comic metadata:
+
+```bash
+# List comics in the database (with pagination)
+./xander db list
+./xander db list --limit 50 --offset 100
+
+# Search for specific comics
+./xander db list --query "Batman"
+
+# Export database to a JSON file
+./xander db export --output my_comics.json
+
+# Import comics from a JSON file
+./xander db import --input my_comics.json
+
+# View database statistics
+./xander db stats
+```
+
+The database is stored at `~/.config/xander/xander.db` by default, but you can specify a custom path:
+
+```bash
+./xander db list --database /path/to/custom.db
+```
+
 ## API Rate Limiting
 
 Xander respects the ComicVine API guidelines:
@@ -145,6 +178,7 @@ xander/
 │   ├── comicvine/   # ComicVine API client
 │   ├── config/      # Configuration handling
 │   ├── parse/       # Filename parsing utilities
+│   ├── storage/     # Database storage implementations
 │   └── tvdb/        # TVDB API client (future)
 ├── examples/        # Example files
 └── main.go          # Application entry point
