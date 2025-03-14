@@ -11,12 +11,14 @@ import (
 	"xander/internal/comic"
 	"xander/internal/comicvine"
 	"xander/internal/csv"
+	"xander/internal/storage"
 )
 
 var (
 	comicInputFile string
 	comicOutputFormat string
 	comicVerbose bool
+	comicStoreInDb bool
 )
 
 var comicCmd = &cobra.Command{
@@ -63,6 +65,13 @@ func init() {
 		"verbose",
 		false,
 		"enable verbose API logging",
+	)
+	
+	comicCmd.Flags().BoolVar(
+		&comicStoreInDb,
+		"save",
+		false,
+		"store results in the local database",
 	)
 }
 
@@ -123,6 +132,30 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	// Store results in database if requested
+	if comicStoreInDb {
+		// Initialize storage
+		store, err := storage.GetStorage(storage.SQLite, dbPath)
+		if err != nil {
+			fmt.Printf("Error initializing database: %v\n", err)
+			return
+		}
+		defer store.Close()
+		
+		// Store each comic
+		savedCount := 0
+		for _, result := range results {
+			if err := store.StoreComic(result); err != nil {
+				fmt.Printf("Error storing comic '%s #%s' in database: %v\n", 
+					result.Series, result.Issue, err)
+				continue
+			}
+			savedCount++
+		}
+		
+		fmt.Printf("Saved %d comics to the database.\n", savedCount)
+	}
+	
 	// Output results
 	if comicOutputFormat == "json" {
 		// Convert API results to domain model
