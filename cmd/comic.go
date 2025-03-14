@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"xander/internal/comic"
 	"xander/internal/comicvine"
+	"xander/internal/csv"
 	"xander/internal/storage"
 )
 
@@ -55,7 +57,7 @@ func init() {
 		&comicOutputFormat,
 		"format",
 		"text",
-		"output format (text or json)",
+		"output format (text, json, or csv)",
 	)
 	
 	comicCmd.Flags().BoolVar(
@@ -156,7 +158,19 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 	
 	// Output results
 	if comicOutputFormat == "json" {
-		outputJSON(results)
+		// Convert API results to domain model
+		comics := make([]*comic.Comic, len(results))
+		for i, result := range results {
+			comics[i] = result.ToComic()
+		}
+		outputJSON(comics)
+	} else if comicOutputFormat == "csv" {
+		// Convert API results to domain model
+		comics := make([]*comic.Comic, len(results))
+		for i, result := range results {
+			comics[i] = result.ToComic()
+		}
+		outputCSV(comics)
 	} else {
 		outputText(results)
 	}
@@ -183,28 +197,37 @@ func outputText(results []*comicvine.Result) {
 	}
 }
 
-func outputJSON(results []*comicvine.Result) {
+func outputJSON(comics []*comic.Comic) {
 	// Using the json package would be better, but for simplicity
 	// we'll just manually construct a JSON string
 	fmt.Println("[")
-	for i, result := range results {
+	for i, comic := range comics {
 		fmt.Printf("  {\n")
-		fmt.Printf("    \"filename\": %q,\n", result.Filename)
-		fmt.Printf("    \"series\": %q,\n", result.Series)
-		fmt.Printf("    \"issue\": %q,\n", result.Issue)
-		fmt.Printf("    \"year\": %q,\n", result.Year)
-		fmt.Printf("    \"publisher\": %q,\n", result.Publisher)
-		fmt.Printf("    \"comicvine_id\": %d,\n", result.ComicVineID)
-		fmt.Printf("    \"title\": %q,\n", result.Title)
-		fmt.Printf("    \"cover_url\": %q,\n", result.CoverURL)
-		fmt.Printf("    \"description\": %q\n", result.Description)
+		fmt.Printf("    \"filename\": %q,\n", comic.Filename)
+		fmt.Printf("    \"series\": %q,\n", comic.Series)
+		fmt.Printf("    \"issue\": %q,\n", comic.Issue)
+		fmt.Printf("    \"year\": %q,\n", comic.Year)
+		fmt.Printf("    \"publisher\": %q,\n", comic.Publisher)
+		fmt.Printf("    \"comicvine_id\": %d,\n", comic.ComicVineID)
+		fmt.Printf("    \"title\": %q,\n", comic.Title)
+		fmt.Printf("    \"cover_url\": %q,\n", comic.CoverURL)
+		fmt.Printf("    \"description\": %q\n", comic.Description)
 		fmt.Printf("  }")
 		
-		if i < len(results)-1 {
+		if i < len(comics)-1 {
 			fmt.Println(",")
 		} else {
 			fmt.Println()
 		}
 	}
 	fmt.Println("]")
+}
+
+func outputCSV(comics []*comic.Comic) {
+	csvString, err := csv.ComicToCSV(comics)
+	if err != nil {
+		fmt.Printf("Error generating CSV: %v\n", err)
+		return
+	}
+	fmt.Println(csvString)
 }
