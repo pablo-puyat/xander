@@ -69,22 +69,22 @@ Get metadata for files with comic-like filenames using the ComicVine API (any fi
 
 ```bash
 # Process a single file
-./xander comic "Batman (2016) #001.cbz"
+./xander comicvine "Batman (2016) #001.cbz"
 
 # Process multiple files
-./xander comic "Batman (2016) #001.cbz" "The Flash (2016) #001.cbr"
+./xander comicvine "Batman (2016) #001.cbz" "The Flash (2016) #001.cbr"
 
 # Process files from a text file
-./xander comic --input examples/comics.txt
+./xander comicvine --input examples/comics.txt
 
 # Output in JSON format
-./xander comic --input examples/comics.txt --format json
+./xander comicvine --input examples/comics.txt --format json
 
 # Enable verbose logging to debug API communication
-./xander comic "Wonder Woman 013 (2024)" --verbose
+./xander comicvine "Wonder Woman 013 (2024)" --verbose
 
 # Store results in the local database
-./xander comic --input examples/comics.txt --save
+./xander comicvine --input examples/comics.txt --save
 ```
 
 ### Using Input Files
@@ -125,34 +125,6 @@ Examples:
 - `Jim Henson's Labyrinth 01 (of 08) (2024) (digital) (Son of Ultron-Empire).cbr`
 
 Note: The parser ignores file extensions, so it can process files with any extension or no extension at all.
-
-## Database Features
-
-Xander includes a built-in SQLite database for storing and querying comic metadata:
-
-```bash
-# List comics in the database (with pagination)
-./xander db list
-./xander db list --limit 50 --offset 100
-
-# Search for specific comics
-./xander db list --query "Batman"
-
-# Export database to a JSON file
-./xander db export --output my_comics.json
-
-# Import comics from a JSON file
-./xander db import --input my_comics.json
-
-# View database statistics
-./xander db stats
-```
-
-The database is stored at `~/.config/xander/xander.db` by default, but you can specify a custom path:
-
-```bash
-./xander db list --database /path/to/custom.db
-```
 
 ## API Rate Limiting
 
