@@ -10,8 +10,6 @@ type StorageType string
 const (
 	// SQLite storage type
 	SQLite StorageType = "sqlite"
-	// Memory storage type (for testing)
-	Memory StorageType = "memory"
 )
 
 // GetStorage returns a storage instance of the requested type
@@ -19,9 +17,6 @@ func GetStorage(storageType StorageType, dbPath string) (Storage, error) {
 	switch storageType {
 	case SQLite:
 		return NewSQLiteStorage(dbPath)
-	case Memory:
-		// Use in-memory storage for testing
-		return NewMemoryStorage(), nil
 	default:
 		return nil, fmt.Errorf("unknown storage type: %s", storageType)
 	}
