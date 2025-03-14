@@ -143,26 +143,6 @@ func ParseComicFilename(filename string) (series, issue, year, publisher string,
 		return
 	}
 	
-	// Pattern: "YYYY-MM - Title (digital) (Group).ext"
-	yearMonthPattern := regexp.MustCompile(`^(\d{4})-(\d{2})\s+-\s+(.*?)(?:\s+\(.*?\))*$`)
-	matches = yearMonthPattern.FindStringSubmatch(baseFilename)
-	if len(matches) >= 4 {
-		series = strings.TrimSpace(matches[3]) // Use title as series
-		year = matches[1]
-		issue = matches[2] // Use month as issue
-		return
-	}
-	
-	// Pattern: "YYYY (Year) (digital) (Group).ext" - Year as title
-	yearAsTitlePattern := regexp.MustCompile(`^(\d{4})\s+\((\d{4})\)(?:\s+\(.*?\))*$`)
-	matches = yearAsTitlePattern.FindStringSubmatch(baseFilename)
-	if len(matches) >= 3 {
-		series = matches[1] // Year as series name
-		year = matches[2]
-		issue = "1" // Default to issue 1
-		return
-	}
-	
 	// Simple pattern: "Series 001.ext" - Just series and issue number
 	simplePattern := regexp.MustCompile(`^(.*?)\s+(\d{3})(?:\s+.*?)*$`)
 	matches = simplePattern.FindStringSubmatch(baseFilename)
@@ -184,14 +164,6 @@ func ParseComicFilename(filename string) (series, issue, year, publisher string,
 		return
 	}
 	
-	// Last resort - if nothing else matches but the filename looks reasonable
-	// Just use the whole filename as the series name
-	if strings.TrimSpace(baseFilename) != "" {
-		series = strings.TrimSpace(baseFilename)
-		issue = "1" // Default to issue 1
-		return
-	}
-
 	// If no pattern matches, return an error
 	return "", "", "", "", ErrInvalidFilename
 }

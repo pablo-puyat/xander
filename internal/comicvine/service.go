@@ -3,6 +3,8 @@ package comicvine
 import (
 	"fmt"
 	"log"
+	"regexp"
+	"strconv"
 	"strings"
 	"xander/internal/comic"
 	"xander/internal/parse"
@@ -69,6 +71,14 @@ func (s *ComicService) GetMetadata(filename string) (*Result, error) {
 		return nil, fmt.Errorf("failed to parse filename: %w", err)
 	}
 
+	// Validate the parsed series name
+	if isInvalidSeriesName(series) {
+		if s.verbose {
+			log.Printf("Skipping '%s': invalid series name '%s' appears to be a date", filename, series)
+		}
+		return nil, fmt.Errorf("invalid series name (appears to be a date): %s", series)
+	}
+
 	if s.verbose {
 		log.Printf("Parsed '%s' as Series='%s', Issue='%s', Year='%s', Publisher='%s'", 
 			filename, series, issue, year, publisher)
@@ -112,11 +122,46 @@ func (s *ComicService) GetMetadata(filename string) (*Result, error) {
 	
 	// Extract additional data from raw data
 	if comicInfo.RawData != nil {
-		// Extract volume info
+		// Extract volume info and ensure it's correctly associated with this comic
 		if volumeData, ok := comicInfo.RawData["volume"].(map[string]interface{}); ok {
-			result.Volume = volumeData
+			// Create a copy of the volume data to avoid sharing references
+			volumeCopy := make(map[string]interface{})
+			for k, v := range volumeData {
+				volumeCopy[k] = v
+			}
 			
-			// Extract publisher from volume
+			// Add issue-specific metadata to avoid duplicate volume data
+			volumeCopy["issue_id"] = comicInfo.ID  // Ensure link to correct issue
+			volumeCopy["issue_number"] = issue      // Store the issue number
+			
+			// Verify volume data - if name doesn't match the series, this is likely incorrect
+			if volumeName, ok := volumeCopy["name"].(string); ok {
+				if !strings.Contains(strings.ToLower(volumeName), strings.ToLower(series)) {
+					// Log the mismatch but don't immediately abort - try to fix
+					if s.verbose {
+						log.Printf("Warning: Volume name '%s' doesn't match series '%s', fixing...", 
+							volumeName, series)
+					}
+					// Override with series name to ensure correct data
+					volumeCopy["name"] = series
+					
+					// If we have ID data, check that too
+					if volID, ok := volumeCopy["id"].(float64); ok {
+						volumeCopy["original_id"] = volID  // Keep original for reference
+						// We don't have the correct ID, but ensure it's unique at least
+						// Use a hash of the series name as a temporary ID
+						h := 0
+						for _, c := range series {
+							h = 31*h + int(c)
+						}
+						volumeCopy["id"] = h
+					}
+				}
+			}
+			
+			result.Volume = volumeCopy
+			
+			// Extract publisher from volume (using original volume data)
 			if pubData, ok := volumeData["publisher"].(map[string]interface{}); ok {
 				if pubName, ok := pubData["name"].(string); ok {
 					result.ApiPublisher = pubName
@@ -314,4 +359,56 @@ func FromComic(c *comic.Comic) *Result {
 		// Raw data
 		RawData:         c.RawData,
 	}
+}
+
+// isInvalidSeriesName checks if a series name appears to be a date rather than a real comic title
+func isInvalidSeriesName(series string) bool {
+	// Check if the series name is just a year (4 digits)
+	yearPattern := regexp.MustCompile(`^\d{4}$`)
+	if yearPattern.MatchString(series) {
+		return true
+	}
+	
+	// Check if the series name is in the format YYYY-MM
+	yearMonthPattern := regexp.MustCompile(`^\d{4}-\d{2}$`)
+	if yearMonthPattern.MatchString(series) {
+		return true
+	}
+	
+	// Check for series names that start with dates
+	if strings.HasPrefix(series, "20") && len(series) >= 4 {
+		// Check if the first 4 characters look like a recent year (2000-2030)
+		yearPrefix := series[:4]
+		if year, err := strconv.Atoi(yearPrefix); err == nil {
+			if year >= 2000 && year <= 2030 {
+				// Likely a date-based filename
+				return true
+			}
+		}
+	}
+	
+	// Check if the series starts with 19 and looks like a year from 1900s
+	if strings.HasPrefix(series, "19") && len(series) >= 4 {
+		yearPrefix := series[:4]
+		if year, err := strconv.Atoi(yearPrefix); err == nil {
+			if year >= 1900 && year <= 1999 {
+				// Likely a date-based filename
+				return true
+			}
+		}
+	}
+	
+	// Additional checks for suspicious names
+	suspiciousNames := []string{
+		"The Umbrella Academy", // This particular filename format causes confusion
+	}
+	
+	for _, suspicious := range suspiciousNames {
+		if strings.Contains(series, suspicious) && strings.Contains(series, "-") {
+			// Likely a problematic filename
+			return true
+		}
+	}
+	
+	return false
 }

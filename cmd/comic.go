@@ -12,6 +12,7 @@ import (
 	"xander/internal/comic"
 	"xander/internal/comicvine"
 	"xander/internal/csv"
+	"xander/internal/parse"
 	"xander/internal/storage"
 )
 
@@ -20,6 +21,7 @@ var (
 	comicOutputFormat string
 	comicVerbose bool
 	comicDbPath string // Path to save data, empty means use default location
+	comicDryRun bool   // Dry run mode - parse only, don't query API
 )
 
 var comicCmd = &cobra.Command{
@@ -44,9 +46,77 @@ File extensions are ignored, so any string that follows the naming pattern can b
 	Run: runComicCmd,
 }
 
+var testCmd = &cobra.Command{
+	Use:   "test",
+	Short: "Test the database fix",
+	Long:  "Create test data in the database with unique volume information",
+	Run: func(cmd *cobra.Command, args []string) {
+		// Initialize storage with default path
+		store, err := storage.GetStorage(storage.SQLite, "")
+		if err != nil {
+			fmt.Printf("Error initializing database: %v\n", err)
+			return
+		}
+		defer store.Close()
+		
+		// Create test comics with unique volume data
+		testComics := []struct {
+			filename string
+			series   string
+			issue    string
+			year     string
+			publisher string
+			volumeID int
+		}{
+			{"Batman (2016) #001.cbz", "Batman", "001", "2016", "DC Comics", 101},
+			{"DC Comics - The Flash (2016) #001.cbr", "The Flash", "001", "2016", "DC Comics", 102},
+			{"Amazing Spider-Man Vol. 5 (2018) #001.cbz", "Amazing Spider-Man", "001", "2018", "Marvel", 103},
+			{"Daredevil (2019) #001.cbz", "Daredevil", "001", "2019", "Marvel", 104},
+		}
+		
+		for _, tc := range testComics {
+			// Create volume JSON with unique ID
+			volumeJSON := map[string]interface{}{
+				"id": tc.volumeID,
+				"name": tc.series,
+				"issue_number": tc.issue,
+				"api_detail_url": fmt.Sprintf("https://comicvine.gamespot.com/api/volume/4050-%d/", tc.volumeID),
+				"site_detail_url": fmt.Sprintf("https://comicvine.gamespot.com/%s/4050-%d/", 
+					strings.ToLower(strings.ReplaceAll(tc.series, " ", "-")), tc.volumeID),
+			}
+			
+			// Create result
+			result := &comicvine.Result{
+				Filename:    tc.filename,
+				Series:      tc.series,
+				Issue:       tc.issue,
+				Year:        tc.year,
+				Publisher:   tc.publisher,
+				ComicVineID: tc.volumeID + 1000, // Just make up a unique ID
+				Title:       fmt.Sprintf("%s #%s", tc.series, tc.issue),
+				Volume:      volumeJSON,
+			}
+			
+			// Store in database
+			if err := store.StoreComic(result); err != nil {
+				fmt.Printf("Error storing comic '%s #%s' in database: %v\n", 
+					tc.series, tc.issue, err)
+				continue
+			}
+			
+			fmt.Printf("Successfully added test data for %s #%s with unique volume ID %d\n", 
+				tc.series, tc.issue, tc.volumeID)
+		}
+		
+		// Show success message
+		fmt.Println("Test data created. Run 'sqlite3 ~/.local/share/xander/xander.db \"SELECT id, series, issue, volume_json FROM comics;\"' to verify.")
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(comicCmd)
-
+	rootCmd.AddCommand(testCmd)
+	
 	comicCmd.Flags().StringVar(
 		&comicInputFile,
 		"input",
@@ -78,6 +148,14 @@ func init() {
 	
 	// Allow the --save flag to be used without a value
 	comicCmd.Flags().Lookup("save").NoOptDefVal = "DEFAULT"
+	
+	// Add dry-run flag to test parsing without API queries
+	comicCmd.Flags().BoolVar(
+		&comicDryRun,
+		"dry-run",
+		false,
+		"parse filenames only, don't query API or save to database",
+	)
 }
 
 func runComicCmd(cmd *cobra.Command, args []string) {
@@ -156,11 +234,84 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 		shouldCheckDb = true
 	}
 	
-	// Process each file - check if it exists in the database BEFORE parsing
-	var apiFilenames []string
+	// Track files we can't parse or skip for various reasons
+	type skippedFile struct {
+		filename string
+		reason   string
+	}
+	var skippedFiles []skippedFile
+	
+	// Pre-filter files - verify we can parse them before checking DB or API
+	var validFilenames []string
+	var parsedResults []struct {
+		filename string
+		series string
+		issue string
+		year string
+		publisher string
+	}
 	
 	for _, filename := range filenames {
-		// Just check if the filename exists in the database (using just the filename, not comicvine ID)
+		// Try to parse the filename first - only proceed with valid patterns
+		series, issue, year, publisher, err := parse.ParseComicFilename(filename)
+		if err != nil {
+			// Can't parse the filename - doesn't match the expected patterns
+			skippedFiles = append(skippedFiles, skippedFile{
+				filename: filename,
+				reason:   "Doesn't match any supported comic filename format",
+			})
+			continue
+		}
+		
+		// Store parsed results for dry-run mode
+		parsedResults = append(parsedResults, struct {
+			filename string
+			series string
+			issue string
+			year string
+			publisher string
+		}{
+			filename: filename,
+			series: series,
+			issue: issue,
+			year: year,
+			publisher: publisher,
+		})
+		
+		// Filename passed validation, add to list of files to process
+		validFilenames = append(validFilenames, filename)
+	}
+	
+	// If dry-run mode is enabled, show parsing results and exit
+	if comicDryRun {
+		fmt.Printf("Dry run results (parsed %d of %d files):\n\n", len(parsedResults), len(filenames))
+		for _, pr := range parsedResults {
+			fmt.Printf("Filename: %s\n", pr.filename)
+			fmt.Printf("  Series: %s\n", pr.series)
+			fmt.Printf("  Issue: %s\n", pr.issue)
+			fmt.Printf("  Year: %s\n", pr.year)
+			if pr.publisher != "" {
+				fmt.Printf("  Publisher: %s\n", pr.publisher)
+			}
+			fmt.Println()
+		}
+		
+		// Report skipped files in dry-run mode too
+		if len(skippedFiles) > 0 {
+			fmt.Printf("Skipped %d files due to parsing issues:\n", len(skippedFiles))
+			for _, sf := range skippedFiles {
+				fmt.Printf("  %s: %s\n", sf.filename, sf.reason)
+			}
+		}
+		
+		return
+	}
+	
+	// Process each file - check if it exists in the database BEFORE sending to API
+	var apiFilenames []string
+	
+	for _, filename := range validFilenames {
+		// Check if the filename exists in the database
 		if shouldCheckDb {
 			// Use only the filename to check the database - before parsing
 			exists, err := store.FilenameExistsInDb(filename)
@@ -182,12 +333,30 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 	}
 	
 	// If saving to DB and no files to process, we're done
-	if shouldCheckDb && len(apiFilenames) == 0 {
+	if shouldCheckDb && len(apiFilenames) == 0 && len(skippedFiles) == 0 {
 		fmt.Println("All files are already in the database - nothing to do.")
 		return
 	}
 	
-	// Only call the API for files not found in the database
+	// Report skipped files
+	if len(skippedFiles) > 0 {
+		fmt.Printf("\nSkipped %d files due to parsing issues:\n", len(skippedFiles))
+		for _, sf := range skippedFiles {
+			fmt.Printf("  %s: %s\n", sf.filename, sf.reason)
+		}
+		fmt.Println()
+	}
+	
+	// Only call the API for valid files not found in the database
+	if len(apiFilenames) == 0 {
+		if len(skippedFiles) > 0 {
+			fmt.Println("No valid files to process. Please check the skipped files list.")
+		} else {
+			fmt.Println("No files to process.")
+		}
+		return
+	}
+	
 	apiResults, err := service.GetMetadataForFiles(apiFilenames)
 	if err != nil {
 		fmt.Printf("Error getting metadata from API: %v\n", err)

@@ -16,6 +16,11 @@ type SQLiteStorage struct {
 	db *sql.DB
 }
 
+// GetDB returns the database connection for testing
+func (s *SQLiteStorage) GetDB() *sql.DB {
+	return s.db
+}
+
 // NewSQLiteStorage creates a new SQLite storage instance
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	// If dbPath is empty, use default location following XDG spec
