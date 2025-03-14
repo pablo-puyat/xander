@@ -139,12 +139,7 @@ func saveConfig() {
 func init() {
 	log.SetOutput(io.Discard)
 
-	rootCmd.PersistentFlags().StringVar(
-		&dbPath,
-		"database",
-		"",
-		"path to SQLite database file",
-	)
+	// dbPath is now set by the --save option in the comic command
 
 	rootCmd.PersistentFlags().BoolVar(
 		&verbose,

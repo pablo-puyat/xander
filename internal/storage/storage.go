@@ -10,6 +10,9 @@ type Storage interface {
 	// StoreComic saves comic metadata to storage
 	StoreComic(result *comicvine.Result) error
 	
+	// FilenameExistsInDb checks if a filename exists in the database (before parsing)
+	FilenameExistsInDb(filename string) (bool, error)
+	
 	// Close closes the storage connection
 	Close() error
 }

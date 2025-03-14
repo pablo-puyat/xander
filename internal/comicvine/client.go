@@ -65,8 +65,22 @@ type Issue struct {
 	IssueNumber string `json:"issue_number"`
 	Volume      Volume `json:"volume"`
 	CoverDate   string `json:"cover_date"`
+	StoreDate   string `json:"store_date"`
 	Image       Image  `json:"image"`
 	Description string `json:"description"`
+	
+	// Additional data captured from raw JSON response
+	Characters  []map[string]interface{} `json:"-"`
+	Teams       []map[string]interface{} `json:"-"`
+	Locations   []map[string]interface{} `json:"-"`
+	Concepts    []map[string]interface{} `json:"-"`
+	Objects     []map[string]interface{} `json:"-"`
+	People      []map[string]interface{} `json:"-"`
+	DateAdded   string                   `json:"-"`
+	DateUpdated string                   `json:"-"`
+	
+	// Raw data map for additional fields not explicitly defined
+	RawData     map[string]interface{} `json:"-"`
 }
 
 // Response represents the API response from ComicVine
@@ -155,7 +169,7 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 	params.Add("api_key", c.apiKey)
 	params.Add("format", "json")
 	params.Add("limit", "10")          // Increase result count
-	params.Add("field_list", "id,name,issue_number,volume,cover_date,image,description") // Only get fields we need
+	// Request all fields by not specifying a field_list
 	
 	// Use query parameter (more flexible than filter)
 	query := fmt.Sprintf("%s %s", series, normalizedIssueNumber)
@@ -314,6 +328,24 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 			log.Printf("ComicVine API Error parsing JSON: %v", err)
 		}
 		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	
+	// Also store complete raw JSON data
+	var rawData map[string]interface{}
+	if err := json.Unmarshal(body, &rawData); err != nil {
+		if c.verbose {
+			log.Printf("Warning: Failed to parse raw JSON data: %v", err)
+		}
+		// Continue even if this fails
+	} else {
+		// Store raw results in each issue
+		if rawResults, ok := rawData["results"].([]interface{}); ok {
+			for i, rawResult := range rawResults {
+				if i < len(result.Results) {
+					result.Results[i].RawData = rawResult.(map[string]interface{})
+				}
+			}
+		}
 	}
 
 	if result.StatusCode != 1 {

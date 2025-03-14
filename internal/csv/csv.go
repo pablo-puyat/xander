@@ -74,10 +74,10 @@ func ComicToCSV(comics []*comic.Comic) (string, error) {
     }
     
     // Define CSV headers based on Comic struct
-    headers := []string{
-        "Filename", "Series", "Issue", "Year", "Publisher", 
+    headers := []string{"Filename", "Series", "Issue", "Year", "Publisher", 
         "ComicVineID", "Title", "CoverURL", "Description",
-    }
+        "StoreDate", "CoverDate", "DateAdded", "DateLastUpdated",
+        "Characters", "Teams", "People"}
     
     // Create CSV writer
     var buf strings.Builder
@@ -90,6 +90,7 @@ func ComicToCSV(comics []*comic.Comic) (string, error) {
     
     // Write data rows
     for _, c := range comics {
+        // Basic data
         row := []string{
             c.Filename,
             c.Series,
@@ -102,6 +103,22 @@ func ComicToCSV(comics []*comic.Comic) (string, error) {
             c.Description,
         }
         
+        // Extended data
+        // Add additional fields, handling nil values
+        row = append(row, c.StoreDate)
+        row = append(row, c.CoverDate)
+        row = append(row, c.DateAdded)
+        row = append(row, c.DateLastUpdated)
+        
+        // Convert array fields to comma-separated strings
+        characterNames := extractNames(c.Characters)
+        teamNames := extractNames(c.Teams)
+        peopleNames := extractNames(c.People)
+        
+        row = append(row, characterNames)
+        row = append(row, teamNames)
+        row = append(row, peopleNames)
+        
         if err := writer.Write(row); err != nil {
             return "", fmt.Errorf("error writing comic to CSV: %w", err)
         }
@@ -113,6 +130,22 @@ func ComicToCSV(comics []*comic.Comic) (string, error) {
     }
     
     return buf.String(), nil
+}
+
+// extractNames converts an array of entity maps to a comma-separated string of names
+func extractNames(entities []map[string]interface{}) string {
+	if entities == nil || len(entities) == 0 {
+		return ""
+	}
+	
+	var names []string
+	for _, entity := range entities {
+		if name, ok := entity["name"].(string); ok {
+			names = append(names, name)
+		}
+	}
+	
+	return strings.Join(names, ", ")
 }
 
 // WriteCSV writes comics to a CSV writer

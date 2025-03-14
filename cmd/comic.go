@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ var (
 	comicInputFile string
 	comicOutputFormat string
 	comicVerbose bool
-	comicStoreInDb bool
+	comicDbPath string // Path to save data, empty means use default location
 )
 
 var comicCmd = &cobra.Command{
@@ -67,12 +68,16 @@ func init() {
 		"enable verbose API logging",
 	)
 	
-	comicCmd.Flags().BoolVar(
-		&comicStoreInDb,
+	// Mark the comicDbPath flag as having an optional value
+	comicCmd.Flags().StringVar(
+		&comicDbPath,
 		"save",
-		false,
-		"store results in the local database",
+		"",
+		"store results in database (optionally specify custom database path)",
 	)
+	
+	// Allow the --save flag to be used without a value
+	comicCmd.Flags().Lookup("save").NoOptDefVal = "DEFAULT"
 }
 
 func runComicCmd(cmd *cobra.Command, args []string) {
@@ -125,54 +130,126 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 	// Create the service
 	service := comicvine.NewComicService(cfg.ComicVineAPIKey, comicVerbose)
 
-	// Get metadata
-	results, err := service.GetMetadataForFiles(filenames)
-	if err != nil {
-		fmt.Printf("Error getting metadata: %v\n", err)
-		return
-	}
-
-	// Store results in database if requested
-	if comicStoreInDb {
-		// Initialize storage
-		store, err := storage.GetStorage(storage.SQLite, dbPath)
+	// Determine if we should check for existing entries in the database
+	var store storage.Storage
+	var shouldCheckDb bool
+	
+	// If the save flag is set, we can open the database early to check for existing entries
+	if cmd.Flags().Changed("save") {
+		// Determine the database path to use
+		dbPath := comicDbPath
+		
+		// If --save was used without a value (or with the special DEFAULT value)
+		if dbPath == "DEFAULT" {
+			dbPath = "" // Empty string means use default location
+		}
+		
+		// Initialize storage with specified path (empty means use default location)
+		var err error
+		store, err = storage.GetStorage(storage.SQLite, dbPath)
 		if err != nil {
 			fmt.Printf("Error initializing database: %v\n", err)
 			return
 		}
 		defer store.Close()
 		
-		// Store each comic
-		savedCount := 0
-		for _, result := range results {
-			if err := store.StoreComic(result); err != nil {
-				fmt.Printf("Error storing comic '%s #%s' in database: %v\n", 
-					result.Series, result.Issue, err)
-				continue
-			}
-			savedCount++
-		}
-		
-		fmt.Printf("Saved %d comics to the database.\n", savedCount)
+		shouldCheckDb = true
 	}
 	
-	// Output results
-	if comicOutputFormat == "json" {
-		// Convert API results to domain model
-		comics := make([]*comic.Comic, len(results))
-		for i, result := range results {
-			comics[i] = result.ToComic()
+	// Process each file - check if it exists in the database BEFORE parsing
+	var apiFilenames []string
+	
+	for _, filename := range filenames {
+		// Just check if the filename exists in the database (using just the filename, not comicvine ID)
+		if shouldCheckDb {
+			// Use only the filename to check the database - before parsing
+			exists, err := store.FilenameExistsInDb(filename)
+			if err != nil {
+				fmt.Printf("Error checking database for %s: %v\n", filename, err)
+			}
+			
+			if exists {
+				// Skip files already in the database
+				fmt.Printf("Skipping %s (already in database)\n", filename)
+			} else {
+				// Not found, need to get from API
+				apiFilenames = append(apiFilenames, filename)
+			}
+		} else {
+			// Always get from API if not checking DB
+			apiFilenames = append(apiFilenames, filename)
 		}
-		outputJSON(comics)
-	} else if comicOutputFormat == "csv" {
-		// Convert API results to domain model
-		comics := make([]*comic.Comic, len(results))
-		for i, result := range results {
-			comics[i] = result.ToComic()
+	}
+	
+	// If saving to DB and no files to process, we're done
+	if shouldCheckDb && len(apiFilenames) == 0 {
+		fmt.Println("All files are already in the database - nothing to do.")
+		return
+	}
+	
+	// Only call the API for files not found in the database
+	apiResults, err := service.GetMetadataForFiles(apiFilenames)
+	if err != nil {
+		fmt.Printf("Error getting metadata from API: %v\n", err)
+		return
+	}
+	
+	// If we're saving to the database
+	if cmd.Flags().Changed("save") {
+		// Save API results to database
+		if len(apiResults) > 0 {
+			savedCount := 0
+			total := len(apiResults)
+			
+			fmt.Println("\nSaving results to database...")
+			
+			for i, result := range apiResults {
+				// Show progress before saving each comic
+				fmt.Printf("Saving %d of %d: %s #%s\n", i+1, total, result.Series, result.Issue)
+				
+				if err := store.StoreComic(result); err != nil {
+					fmt.Printf("Error storing comic '%s #%s' in database: %v\n", 
+						result.Series, result.Issue, err)
+					continue
+				}
+				savedCount++
+			}
+			
+			// Show success message with database location
+			dbLocation := dbPath
+			if dbLocation == "" {
+				// If using default location, show that to the user
+				userHome, _ := os.UserHomeDir()
+				if userHome != "" {
+					dbLocation = filepath.Join(userHome, ".local", "share", "xander", "xander.db")
+				} else {
+					dbLocation = "default location"
+				}
+			}
+			
+			fmt.Printf("Saved %d comics to the database at: %s\n", savedCount, dbLocation)
+		} else {
+			fmt.Println("No comics were saved to the database.")
 		}
-		outputCSV(comics)
 	} else {
-		outputText(results)
+		// Only output results if we're not saving to the database
+		if comicOutputFormat == "json" {
+			// Convert API results to domain model
+			comics := make([]*comic.Comic, len(apiResults))
+			for i, result := range apiResults {
+				comics[i] = result.ToComic()
+			}
+			outputJSON(comics)
+		} else if comicOutputFormat == "csv" {
+			// Convert API results to domain model
+			comics := make([]*comic.Comic, len(apiResults))
+			for i, result := range apiResults {
+				comics[i] = result.ToComic()
+			}
+			outputCSV(comics)
+		} else {
+			outputText(apiResults)
+		}
 	}
 }
 
