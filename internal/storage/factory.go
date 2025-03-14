@@ -20,8 +20,8 @@ func GetStorage(storageType StorageType, dbPath string) (Storage, error) {
 	case SQLite:
 		return NewSQLiteStorage(dbPath)
 	case Memory:
-		// Not implemented yet, but could be useful for testing
-		return nil, fmt.Errorf("memory storage not implemented")
+		// Use in-memory storage for testing
+		return NewMemoryStorage(), nil
 	default:
 		return nil, fmt.Errorf("unknown storage type: %s", storageType)
 	}
