@@ -22,11 +22,11 @@ var (
 )
 
 var comicCmd = &cobra.Command{
-	Use:   "comic [filenames]",
-	Short: "Get comic metadata for files",
-	Long: `Get metadata for files with comic-like filenames using ComicVine API.
-Files can be provided as arguments or read from a file using the --input flag.
-Filenames should follow one of these formats:
+	Use:   "comicvine [string]",
+	Short: "Get comic metadata for strings",
+	Long: `Get metadata for string with comic-like filenames using ComicVine API.
+string can be provided as arguments or read from a file using the --input flag.
+strings should follow one of these formats:
   - "Series (Year) #Issue" 
   - "Publisher - Series (Year) #Issue"
   - "Series (Year) (digital) (Group)"
@@ -39,7 +39,7 @@ Filenames should follow one of these formats:
   - "Series.Title.Month.Year.Format.Group"
   - "Series 001"
   
-File extensions are ignored, so any file that follows the naming pattern can be processed.`,
+File extensions are ignored, so any string that follows the naming pattern can be processed.`,
 	Run: runComicCmd,
 }
 
@@ -50,7 +50,7 @@ func init() {
 		&comicInputFile,
 		"input",
 		"",
-		"path to a file containing a list of comic files (one per line)",
+		"path to a file containing a list of strings (one per line)",
 	)
 
 	comicCmd.Flags().StringVar(
@@ -118,7 +118,7 @@ func runComicCmd(cmd *cobra.Command, args []string) {
 	filenames = append(filenames, args...)
 
 	if len(filenames) == 0 {
-		fmt.Println("No files provided. Please provide files as arguments or use --input flag.")
+		fmt.Println("No files provided. Please provide string to parse or use --input flag.")
 		return
 	}
 
@@ -180,7 +180,7 @@ func outputText(results []*comicvine.Result) {
 	fmt.Printf("Found metadata for %d comics:\n\n", len(results))
 	
 	for _, result := range results {
-		fmt.Printf("File: %s\n", result.Filename)
+		fmt.Printf("Original String: %s\n", result.Filename)
 		fmt.Printf("Series: %s\n", result.Series)
 		fmt.Printf("Issue: %s\n", result.Issue)
 		fmt.Printf("Year: %s\n", result.Year)
@@ -203,7 +203,7 @@ func outputJSON(comics []*comic.Comic) {
 	fmt.Println("[")
 	for i, comic := range comics {
 		fmt.Printf("  {\n")
-		fmt.Printf("    \"filename\": %q,\n", comic.Filename)
+		fmt.Printf("    \"original_string\": %q,\n", comic.Filename)
 		fmt.Printf("    \"series\": %q,\n", comic.Series)
 		fmt.Printf("    \"issue\": %q,\n", comic.Issue)
 		fmt.Printf("    \"year\": %q,\n", comic.Year)
