@@ -10,15 +10,6 @@ type Storage interface {
 	// StoreComic saves comic metadata to storage
 	StoreComic(result *comicvine.Result) error
 	
-	// GetComics retrieves all stored comics
-	GetComics() ([]*comicvine.Result, error)
-	
-	// GetComicByID retrieves a specific comic by its ID
-	GetComicByID(id int) (*comicvine.Result, error)
-	
-	// GetComicsByFilter retrieves comics matching the provided filter criteria
-	GetComicsByFilter(filter ComicFilter) ([]*comicvine.Result, error)
-	
 	// Close closes the storage connection
 	Close() error
 }
@@ -36,10 +27,3 @@ type ComicFilter struct {
 	Offset    int
 }
 
-// NewFilter creates a new ComicFilter with default values
-func NewFilter() ComicFilter {
-	return ComicFilter{
-		Limit:  100,
-		Offset: 0,
-	}
-}

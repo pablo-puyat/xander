@@ -25,8 +25,5 @@ type Filter struct {
 // Storage defines the interface for comic persistence
 type Storage interface {
 	StoreComic(comic *Comic) error
-	GetComics() ([]*Comic, error)
-	GetComicByID(id int) (*Comic, error)
-	GetComicsByFilter(filter Filter) ([]*Comic, error)
 	Close() error
 }
