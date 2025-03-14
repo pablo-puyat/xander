@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"xander/internal/comic"
 	"xander/internal/parse"
 )
 
@@ -103,4 +104,34 @@ func (s *ComicService) GetMetadataForFiles(filenames []string) ([]*Result, error
 	}
 
 	return results, nil
+}
+
+// ToComic converts a ComicVine API Result to a domain Comic model
+func (r *Result) ToComic() *comic.Comic {
+	return &comic.Comic{
+		Filename:    r.Filename,
+		Series:      r.Series,
+		Issue:       r.Issue,
+		Year:        r.Year,
+		Publisher:   r.Publisher,
+		ComicVineID: r.ComicVineID,
+		Title:       r.Title,
+		CoverURL:    r.CoverURL,
+		Description: r.Description,
+	}
+}
+
+// FromComic creates a ComicVine Result from a domain Comic model
+func FromComic(c *comic.Comic) *Result {
+	return &Result{
+		Filename:    c.Filename,
+		Series:      c.Series,
+		Issue:       c.Issue,
+		Year:        c.Year,
+		Publisher:   c.Publisher,
+		ComicVineID: c.ComicVineID,
+		Title:       c.Title,
+		CoverURL:    c.CoverURL,
+		Description: c.Description,
+	}
 }

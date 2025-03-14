@@ -9,7 +9,7 @@ import (
 
 func TestNewClient(t *testing.T) {
 	apiKey := "test-api-key"
-	client := NewClient(apiKey)
+	client := NewClient(apiKey, false)
 
 	if client.apiKey != apiKey {
 		t.Errorf("NewClient() apiKey = %v, want %v", client.apiKey, apiKey)
@@ -67,6 +67,7 @@ func TestGetIssue(t *testing.T) {
 	client := &Client{
 		apiKey:     "test-api-key",
 		httpClient: server.Client(),
+		cache:      make(map[string]CacheEntry),
 	}
 	// Override the base URL to use the test server
 	originalBaseURL := baseURL
@@ -120,6 +121,7 @@ func TestGetIssue_Error(t *testing.T) {
 	client := &Client{
 		apiKey:     "test-api-key",
 		httpClient: server.Client(),
+		cache:      make(map[string]CacheEntry),
 	}
 	// Override the base URL to use the test server
 	originalBaseURL := baseURL
@@ -157,6 +159,7 @@ func TestGetIssue_NoResults(t *testing.T) {
 	client := &Client{
 		apiKey:     "test-api-key",
 		httpClient: server.Client(),
+		cache:      make(map[string]CacheEntry),
 	}
 	// Override the base URL to use the test server
 	originalBaseURL := baseURL
