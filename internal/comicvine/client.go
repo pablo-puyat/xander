@@ -22,13 +22,13 @@ type CacheEntry struct {
 
 // Client handles requests to the ComicVine API
 type Client struct {
-	apiKey               string
-	httpClient           *http.Client
-	verbose              bool
-	lastRequestTime      time.Time
-	requestCount         int
+	apiKey                string
+	httpClient            *http.Client
+	verbose               bool
+	lastRequestTime       time.Time
+	requestCount          int
 	requestCountResetTime time.Time
-	cache                map[string]CacheEntry // Simple in-memory cache
+	cache                 map[string]CacheEntry // Simple in-memory cache
 }
 
 // NewClient creates a new ComicVine API client
@@ -39,11 +39,11 @@ func NewClient(apiKey string, verbose bool) *Client {
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		verbose: verbose,
-		lastRequestTime: time.Time{}, // Zero time
-		requestCount: 0,
-		requestCountResetTime: time.Now().Add(time.Hour), // Reset after 1 hour
-		cache: make(map[string]CacheEntry), // Initialize cache
+		verbose:               verbose,
+		lastRequestTime:       time.Time{}, // Zero time
+		requestCount:          0,
+		requestCountResetTime: time.Now().Add(time.Hour),   // Reset after 1 hour
+		cache:                 make(map[string]CacheEntry), // Initialize cache
 	}
 }
 
@@ -68,7 +68,8 @@ type Issue struct {
 	StoreDate   string `json:"store_date"`
 	Image       Image  `json:"image"`
 	Description string `json:"description"`
-	
+	Publisher   string `json:"publisher"`
+
 	// Additional data captured from raw JSON response
 	Characters  []map[string]interface{} `json:"-"`
 	Teams       []map[string]interface{} `json:"-"`
@@ -78,9 +79,9 @@ type Issue struct {
 	People      []map[string]interface{} `json:"-"`
 	DateAdded   string                   `json:"-"`
 	DateUpdated string                   `json:"-"`
-	
+
 	// Raw data map for additional fields not explicitly defined
-	RawData     map[string]interface{} `json:"-"`
+	RawData map[string]interface{} `json:"-"`
 }
 
 // Response represents the API response from ComicVine
@@ -95,7 +96,7 @@ type Response struct {
 // - Adds delay between requests to prevent velocity detection
 func (c *Client) checkAndRespectRateLimit() error {
 	now := time.Now()
-	
+
 	// Check if we need to reset the counter (hourly)
 	if now.After(c.requestCountResetTime) {
 		if c.verbose {
@@ -104,47 +105,47 @@ func (c *Client) checkAndRespectRateLimit() error {
 		c.requestCount = 0
 		c.requestCountResetTime = now.Add(time.Hour)
 	}
-	
+
 	// Check if we've exceeded hourly limit (200 requests per hour)
 	if c.requestCount >= 200 {
 		resetTime := c.requestCountResetTime
 		waitDuration := resetTime.Sub(now)
-		
+
 		if c.verbose {
-			log.Printf("ComicVine API: Rate limit reached (200/hour). Need to wait %v until %v", 
+			log.Printf("ComicVine API: Rate limit reached (200/hour). Need to wait %v until %v",
 				waitDuration.Round(time.Second), resetTime.Format(time.RFC3339))
 		}
-		
+
 		// Return rate limit error
-		return fmt.Errorf("ComicVine API rate limit exceeded (200/hour). Try again after %v", 
+		return fmt.Errorf("ComicVine API rate limit exceeded (200/hour). Try again after %v",
 			resetTime.Format(time.RFC3339))
 	}
-	
+
 	// Add delay between requests to prevent "velocity detection" blocks
 	// We'll use a 1 second minimum delay between requests
 	if !c.lastRequestTime.IsZero() {
 		sinceLastRequest := now.Sub(c.lastRequestTime)
 		requestDelay := 1 * time.Second // Minimum delay
-		
+
 		if sinceLastRequest < requestDelay {
 			sleepDuration := requestDelay - sinceLastRequest
 			if c.verbose {
-				log.Printf("ComicVine API: Adding delay of %v between requests to prevent velocity detection", 
+				log.Printf("ComicVine API: Adding delay of %v between requests to prevent velocity detection",
 					sleepDuration.Round(time.Millisecond))
 			}
 			time.Sleep(sleepDuration)
 		}
 	}
-	
+
 	// Update request tracking
 	c.lastRequestTime = time.Now()
 	c.requestCount++
-	
+
 	if c.verbose {
-		log.Printf("ComicVine API: Request %d of 200 for this hour (resets at %v)", 
+		log.Printf("ComicVine API: Request %d of 200 for this hour (resets at %v)",
 			c.requestCount, c.requestCountResetTime.Format(time.RFC3339))
 	}
-	
+
 	return nil
 }
 
@@ -160,7 +161,7 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 	}
 
 	if c.verbose {
-		log.Printf("Searching for series: '%s', issue: '%s' (normalized: '%s')", 
+		log.Printf("Searching for series: '%s', issue: '%s' (normalized: '%s')",
 			series, issueNumber, normalizedIssueNumber)
 	}
 
@@ -168,64 +169,64 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 	params := url.Values{}
 	params.Add("api_key", c.apiKey)
 	params.Add("format", "json")
-	params.Add("limit", "10")          // Increase result count
+	params.Add("limit", "10") // Increase result count
 	// Request all fields by not specifying a field_list
-	
+
 	// Use query parameter (more flexible than filter)
 	query := fmt.Sprintf("%s %s", series, normalizedIssueNumber)
 	params.Add("query", query)
-	
+
 	// Add sort to get most relevant results first
 	params.Add("sort", "name:asc")
-	
+
 	requestURL := fmt.Sprintf("%s/issues?%s", baseURL, params.Encode())
-	
+
 	// Create a cache key based on the series and issue number
 	cacheKey := fmt.Sprintf("%s:%s", strings.ToLower(series), normalizedIssueNumber)
-	
+
 	// Check cache before making a request (cache entries valid for 24 hours)
 	if entry, found := c.cache[cacheKey]; found {
 		cacheTTL := 24 * time.Hour
 		cacheAge := time.Since(entry.Timestamp)
-		
+
 		if cacheAge < cacheTTL {
 			if c.verbose {
 				log.Printf("ComicVine API: Using cached response for '%s #%s' (age: %v, expires in: %v)",
 					series, issueNumber, cacheAge.Round(time.Second), (cacheTTL - cacheAge).Round(time.Second))
 			}
-			
+
 			// Use cached results
 			if len(entry.Results) == 0 {
 				return nil, fmt.Errorf("no results found for %s #%s (cached response)", series, issueNumber)
 			}
-			
+
 			// Find best match using same logic as below
 			var bestMatch *Issue
 			bestScore := -1
-			
+
 			for i := range entry.Results {
 				issue := &entry.Results[i]
 				score := 0
-				
+
 				if strings.Contains(strings.ToLower(issue.Volume.Name), strings.ToLower(series)) {
 					score += 5
 				}
-				
+
 				if issue.IssueNumber == issueNumber || issue.IssueNumber == normalizedIssueNumber {
 					score += 10
 				}
-				
+
 				if score > bestScore {
 					bestScore = score
 					bestMatch = issue
 				}
 			}
-			
+
 			// If no good match found, use first result
 			if bestMatch == nil && len(entry.Results) > 0 {
 				bestMatch = &entry.Results[0]
 			}
-			
+
 			if bestMatch != nil {
 				if c.verbose {
 					log.Printf("ComicVine API: Using cached best match for '%s #%s': ID=%d, Name='%s'",
@@ -238,7 +239,7 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 				series, issueNumber, cacheAge.Round(time.Second))
 		}
 	}
-	
+
 	// Log the request URL (with API key masked)
 	if c.verbose {
 		maskedParams := url.Values{}
@@ -260,7 +261,7 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 		}
 		return nil, fmt.Errorf("rate limit: %w", err)
 	}
-	
+
 	// Make the request
 	resp, err := c.httpClient.Get(requestURL)
 	if err != nil {
@@ -270,35 +271,35 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	// Check for 429 Too Many Requests response
 	if resp.StatusCode == 429 {
 		// Handle rate limiting response
 		resetTimeStr := resp.Header.Get("X-RateLimit-Reset")
 		retryAfterStr := resp.Header.Get("Retry-After")
-		
+
 		// Default retry after 1 hour if not specified
 		retryDelay := 1 * time.Hour
-		
+
 		// Try to parse Retry-After header if provided
 		if retryAfterStr != "" {
 			if seconds, err := strconv.Atoi(retryAfterStr); err == nil {
 				retryDelay = time.Duration(seconds) * time.Second
 			}
 		}
-		
+
 		if c.verbose {
 			log.Printf("ComicVine API Rate Limit Hit (429 Too Many Requests)")
 			log.Printf("  X-RateLimit-Reset: %s", resetTimeStr)
 			log.Printf("  Retry-After: %s", retryAfterStr)
 			log.Printf("  Will retry after: %v", retryDelay)
 		}
-		
+
 		// Update our rate limit counter to avoid further requests
 		c.requestCount = 200 // Mark as exceeded
 		c.requestCountResetTime = time.Now().Add(retryDelay)
-		
-		return nil, fmt.Errorf("ComicVine API rate limit exceeded. Try again after %v", 
+
+		return nil, fmt.Errorf("ComicVine API rate limit exceeded. Try again after %v",
 			retryDelay)
 	}
 
@@ -329,7 +330,7 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 		}
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-	
+
 	// Also store complete raw JSON data
 	var rawData map[string]interface{}
 	if err := json.Unmarshal(body, &rawData); err != nil {
@@ -350,21 +351,21 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 
 	if result.StatusCode != 1 {
 		// Check for specific API error messages about rate limits
-		if strings.Contains(strings.ToLower(result.Error), "rate limit") || 
-		   strings.Contains(strings.ToLower(result.Error), "api usage limits") {
-			
+		if strings.Contains(strings.ToLower(result.Error), "rate limit") ||
+			strings.Contains(strings.ToLower(result.Error), "api usage limits") {
+
 			// Handle rate limiting error message
 			if c.verbose {
 				log.Printf("ComicVine API Rate Limit Error: %s", result.Error)
 			}
-			
+
 			// Update our rate limit counter to avoid further requests
 			c.requestCount = 200 // Mark as exceeded
 			c.requestCountResetTime = time.Now().Add(1 * time.Hour)
-			
+
 			return nil, fmt.Errorf("ComicVine API rate limit exceeded: %s", result.Error)
 		}
-		
+
 		// General API error
 		if c.verbose {
 			log.Printf("ComicVine API Error: Status code %d, Error: %s", result.StatusCode, result.Error)
@@ -383,7 +384,7 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 	if c.verbose {
 		log.Printf("ComicVine API: Found %d results for query '%s %s'", len(result.Results), series, issueNumber)
 		for i, issue := range result.Results {
-			log.Printf("  Result %d: ID=%d, Name='%s', Volume='%s', Issue='%s'", 
+			log.Printf("  Result %d: ID=%d, Name='%s', Volume='%s', Issue='%s'",
 				i+1, issue.ID, issue.Name, issue.Volume.Name, issue.IssueNumber)
 		}
 	}
@@ -395,30 +396,30 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 	for i := range result.Results {
 		issue := &result.Results[i]
 		score := 0
-		
+
 		// If the volume name contains our series name, that's good
 		if strings.Contains(strings.ToLower(issue.Volume.Name), strings.ToLower(series)) {
 			score += 5
 		}
-		
+
 		// If the issue number matches exactly, that's very good
 		if issue.IssueNumber == issueNumber || issue.IssueNumber == normalizedIssueNumber {
 			score += 10
 		}
-		
+
 		if score > bestScore {
 			bestScore = score
 			bestMatch = issue
 		}
 	}
-	
+
 	// If we couldn't find a good match, just use the first result
 	if bestMatch == nil {
 		bestMatch = &result.Results[0]
 	}
 
 	if c.verbose {
-		log.Printf("ComicVine API: Best match for '%s #%s': ID=%d, Name='%s', Volume='%s', Issue='%s'", 
+		log.Printf("ComicVine API: Best match for '%s #%s': ID=%d, Name='%s', Volume='%s', Issue='%s'",
 			series, issueNumber, bestMatch.ID, bestMatch.Name, bestMatch.Volume.Name, bestMatch.IssueNumber)
 	}
 
@@ -427,9 +428,9 @@ func (c *Client) GetIssue(series string, issueNumber string) (*Issue, error) {
 		Results:   result.Results,
 		Timestamp: time.Now(),
 	}
-	
+
 	if c.verbose {
-		log.Printf("ComicVine API: Stored %d results in cache for '%s' (expires: %v)", 
+		log.Printf("ComicVine API: Stored %d results in cache for '%s' (expires: %v)",
 			len(result.Results), cacheKey, time.Now().Add(24*time.Hour).Format(time.RFC3339))
 	}
 
