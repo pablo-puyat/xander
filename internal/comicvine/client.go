@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -19,7 +19,6 @@ const (
 	maxRequestsPerHour     = 200             // Maximum allowed requests per hour by ComicVine API
 )
 
-// Client handles HTTP communication with the ComicVine API
 type Client struct {
 	apiKey             string
 	baseURL            string
@@ -31,10 +30,9 @@ type Client struct {
 	minRequestInterval time.Duration
 }
 
-// NewClient creates a new ComicVine API client
-func NewClient(apiKey string, verbose bool) *Client {
+func NewClient(apiKey string, verbose bool) (*Client, error) {
 	if apiKey == "" {
-		return nil
+		return nil, fmt.Errorf("API key is required")
 	}
 
 	return &Client{
@@ -48,7 +46,7 @@ func NewClient(apiKey string, verbose bool) *Client {
 		requestCount:       0,
 		requestCountReset:  time.Now().Add(time.Hour),
 		minRequestInterval: defaultRequestInterval,
-	}
+	}, nil
 }
 
 // APIResponse represents the standard ComicVine API response structure
@@ -94,7 +92,7 @@ func (c *Client) Get(ctx context.Context, endpoint string, params map[string]str
 	c.updateRequestTracking()
 
 	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, resp.StatusCode, fmt.Errorf("failed to read response: %w", err)
 	}

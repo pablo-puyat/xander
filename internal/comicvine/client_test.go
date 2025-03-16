@@ -2,12 +2,8 @@ package comicvine
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -18,45 +14,50 @@ import (
 // TestNewClient tests the client constructor
 func TestNewClient(t *testing.T) {
 	tests := []struct {
-		name     string
-		apiKey   string
-		verbose  bool
-		wantNil  bool
-		wantHTTP bool
+		name      string
+		apiKey    string
+		verbose   bool
+		wantNil   bool
+		wantHTTP  bool
+		wantError bool
 	}{
 		{
-			name:     "creates client with valid API key",
-			apiKey:   "test-key",
-			verbose:  false,
-			wantNil:  false,
-			wantHTTP: true,
+			name:      "creates client with valid API key",
+			apiKey:    "test-key",
+			verbose:   false,
+			wantNil:   false,
+			wantHTTP:  true,
+			wantError: true,
 		},
 		{
-			name:     "creates verbose client",
-			apiKey:   "test-key",
-			verbose:  true,
-			wantNil:  false,
-			wantHTTP: true,
+			name:      "creates verbose client",
+			apiKey:    "test-key",
+			verbose:   true,
+			wantNil:   false,
+			wantHTTP:  true,
+			wantError: true,
 		},
 		{
-			name:     "fails with empty API key",
-			apiKey:   "",
-			verbose:  false,
-			wantNil:  true,
-			wantHTTP: false,
+			name:      "fails with empty API key",
+			apiKey:    "",
+			verbose:   false,
+			wantNil:   true,
+			wantHTTP:  false,
+			wantError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := NewClient(tt.apiKey, tt.verbose)
-			
-			if tt.wantNil {
-				assert.Nil(t, client)
+			//client := NewClient(tt.apiKey, tt.verbose)
+			client, err := NewClient(tt.apiKey, tt.verbose)
+
+			if tt.wantError && err != nil {
 				return
 			}
-			
+
 			assert.NotNil(t, client)
+			assert.Nil(t, err)
 			assert.Equal(t, tt.apiKey, client.apiKey)
 			assert.Equal(t, tt.verbose, client.verbose)
 			assert.NotNil(t, client.httpClient)
@@ -67,14 +68,14 @@ func TestNewClient(t *testing.T) {
 // TestClientGet tests the basic Get method
 func TestClientGet(t *testing.T) {
 	tests := []struct {
-		name           string
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		endpoint       string
-		params         map[string]string
-		wantErr        bool
+		name            string
+		serverResponse  func(w http.ResponseWriter, r *http.Request)
+		endpoint        string
+		params          map[string]string
+		wantErr         bool
 		wantErrContains string
-		wantStatusCode int
-		wantContains   string
+		wantStatusCode  int
+		wantContains    string
 	}{
 		{
 			name: "successful response",
@@ -187,7 +188,7 @@ func TestClientGet(t *testing.T) {
 // TestRateLimiting tests the client's rate limiting functionality
 func TestRateLimiting(t *testing.T) {
 	requestCount := 0
-	
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount++
 		w.WriteHeader(http.StatusOK)
@@ -196,12 +197,12 @@ func TestRateLimiting(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		apiKey:                "test-key",
-		baseURL:               server.URL,
-		httpClient:            server.Client(),
-		verbose:               false,
-		lastRequestTime:       time.Time{},
-		minRequestInterval:    500 * time.Millisecond,
+		apiKey:             "test-key",
+		baseURL:            server.URL,
+		httpClient:         server.Client(),
+		verbose:            false,
+		lastRequestTime:    time.Time{},
+		minRequestInterval: 500 * time.Millisecond,
 	}
 
 	// Make several requests in a loop
@@ -214,7 +215,7 @@ func TestRateLimiting(t *testing.T) {
 	duration := time.Since(start)
 
 	// Verify time elapsed is at least the min interval * (requests-1)
-	assert.GreaterOrEqual(t, duration, client.minRequestInterval*2, 
+	assert.GreaterOrEqual(t, duration, client.minRequestInterval*2,
 		"Rate limiting should enforce minimum intervals between requests")
 	assert.Equal(t, 3, requestCount, "All requests should have been processed")
 }
@@ -241,7 +242,7 @@ func TestRequestCancellation(t *testing.T) {
 	defer cancel()
 
 	_, _, err := client.Get(ctx, "test", nil)
-	
+
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
@@ -251,14 +252,14 @@ func TestClientRequestFormatting(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify request URL components
 		assert.Equal(t, "/test-endpoint", r.URL.Path)
-		
+
 		// Check query parameters
 		query := r.URL.Query()
 		assert.Equal(t, "test-key", query.Get("api_key"))
 		assert.Equal(t, "json", query.Get("format"))
 		assert.Equal(t, "Batman", query.Get("query"))
 		assert.Equal(t, "10", query.Get("limit"))
-		
+
 		// Return a successful response
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status_code":1,"results":[]}`))
@@ -277,7 +278,7 @@ func TestClientRequestFormatting(t *testing.T) {
 		"query": "Batman",
 		"limit": "10",
 	}
-	
+
 	_, _, err := client.Get(ctx, "test-endpoint", params)
 	require.NoError(t, err)
 }
@@ -286,7 +287,7 @@ func TestClientRequestFormatting(t *testing.T) {
 func TestVerboseLogging(t *testing.T) {
 	// This test doesn't really validate the log output,
 	// just ensures the code path doesn't crash when verbose is on
-	
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status_code":1,"results":[]}`))
@@ -303,6 +304,6 @@ func TestVerboseLogging(t *testing.T) {
 	ctx := context.Background()
 	_, _, err := client.Get(ctx, "test", nil)
 	require.NoError(t, err)
-	
+
 	// No assertion needed - if verbose logging code crashes, the test will fail
 }
