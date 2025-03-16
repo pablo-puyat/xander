@@ -3,7 +3,6 @@ package comicvine
 import (
 	"encoding/json"
 	"errors"
-	"strconv"
 	"testing"
 	"time"
 
@@ -388,13 +387,13 @@ func TestService_GetIssue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a new mock client
 			mockClient := new(MockClient)
-			
+
 			// Set up the mock client expectations
 			for _, mockResp := range tt.mockResponses {
 				mockClient.On("Get", mockResp.endpoint, mockResp.params).
 					Return(mockResp.response, mockResp.statusCode, mockResp.err)
 			}
-			
+
 			// Create service with mock client
 			service := &Service{
 				client:  mockClient,
@@ -425,7 +424,7 @@ func TestService_GetIssue(t *testing.T) {
 			if tt.name == "uses cached result when available" {
 				// First call to populate cache
 				_, _ = service.GetIssue(tt.series, tt.issueNumber)
-				
+
 				// Reset mock to verify no additional calls are made
 				mockClient.ExpectedCalls = nil
 			}
@@ -517,13 +516,13 @@ func TestService_GetSeries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a new mock client
 			mockClient := new(MockClient)
-			
+
 			// Set up the mock client expectations
 			for _, mockResp := range tt.mockResponses {
 				mockClient.On("Get", mockResp.endpoint, mockResp.params).
 					Return(mockResp.response, mockResp.statusCode, mockResp.err)
 			}
-			
+
 			// Create service with mock client
 			service := &Service{
 				client:  mockClient,
@@ -710,7 +709,7 @@ func TestService_FindBestMatch(t *testing.T) {
 			}
 
 			result := service.findBestMatch(tt.issues, tt.series, normalizedIssueNumber)
-			
+
 			require.NotNil(t, result)
 			assert.Equal(t, tt.expectedID, result.ID)
 			assert.Equal(t, tt.expectedName, result.Name)
@@ -720,9 +719,9 @@ func TestService_FindBestMatch(t *testing.T) {
 
 func TestService_NormalizeIssueNumber(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     string
-		expected  string
+		name     string
+		input    string
+		expected string
 	}{
 		{
 			name:     "single digit unchanged",
@@ -845,7 +844,7 @@ func responseWithIssues(issues []Issue) []byte {
 		"status_code": 1,
 		"results":     issues,
 	}
-	
+
 	respBytes, _ := json.Marshal(response)
 	return respBytes
 }

@@ -3,32 +3,26 @@ package comicvine
 import (
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
 	"strings"
 	"xander/internal/comic"
 )
 
-// ComicVineClient defines the interface for the ComicVine API client
-type ComicVineClient interface {
-	GetIssue(series string, issueNumber string) (*Issue, error)
+type ComicClient interface {
+	Get(series string) (*Series, error)
 }
 
-// ComicService represents a service for comic metadata operations
 type ComicService struct {
-	client  ComicVineClient
+	client  ComicClient
 	verbose bool
 }
 
-// NewComicService creates a new comic service
-func NewComicService(apiKey string, verbose bool) *ComicService {
+func NewService(apiKey string, verbose bool) *ComicService {
 	return &ComicService{
 		client:  NewClient(apiKey, verbose),
 		verbose: verbose,
 	}
 }
 
-// Result represents the metadata result for a comic file
 type Result struct {
 	// File information
 	Filename string
@@ -367,56 +361,4 @@ func FromComic(c *comic.Comic) *Result {
 		// Raw data
 		RawData: c.RawData,
 	}
-}
-
-// isInvalidSeriesName checks if a series name appears to be a date rather than a real comic title
-func isInvalidSeriesName(series string) bool {
-	// Check if the series name is just a year (4 digits)
-	yearPattern := regexp.MustCompile(`^\d{4}$`)
-	if yearPattern.MatchString(series) {
-		return true
-	}
-
-	// Check if the series name is in the format YYYY-MM
-	yearMonthPattern := regexp.MustCompile(`^\d{4}-\d{2}$`)
-	if yearMonthPattern.MatchString(series) {
-		return true
-	}
-
-	// Check for series names that start with dates
-	if strings.HasPrefix(series, "20") && len(series) >= 4 {
-		// Check if the first 4 characters look like a recent year (2000-2030)
-		yearPrefix := series[:4]
-		if year, err := strconv.Atoi(yearPrefix); err == nil {
-			if year >= 2000 && year <= 2030 {
-				// Likely a date-based filename
-				return true
-			}
-		}
-	}
-
-	// Check if the series starts with 19 and looks like a year from 1900s
-	if strings.HasPrefix(series, "19") && len(series) >= 4 {
-		yearPrefix := series[:4]
-		if year, err := strconv.Atoi(yearPrefix); err == nil {
-			if year >= 1900 && year <= 1999 {
-				// Likely a date-based filename
-				return true
-			}
-		}
-	}
-
-	// Additional checks for suspicious names
-	suspiciousNames := []string{
-		"The Umbrella Academy", // This particular filename format causes confusion
-	}
-
-	for _, suspicious := range suspiciousNames {
-		if strings.Contains(series, suspicious) && strings.Contains(series, "-") {
-			// Likely a problematic filename
-			return true
-		}
-	}
-
-	return false
 }
