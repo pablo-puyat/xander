@@ -57,7 +57,7 @@ type APIResponse struct {
 }
 
 // Get performs an HTTP GET request to the ComicVine API
-func (c *Client) Get(ctx context.Context, endpoint string, params map[string]string) ([]byte, int, error) {
+func (c *Client) Request(ctx context.Context, endpoint string, params map[string]string) ([]byte, int, error) {
 	// Check rate limits before making request
 	if err := c.checkRateLimit(); err != nil {
 		return nil, 0, err

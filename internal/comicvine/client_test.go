@@ -59,7 +59,7 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
-func TestClientGet(t *testing.T) {
+func TestClientRequest(t *testing.T) {
 	tests := []struct {
 		name            string
 		serverResponse  func(w http.ResponseWriter, r *http.Request)
@@ -160,7 +160,7 @@ func TestClientGet(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			response, statusCode, err := client.Get(ctx, tt.endpoint, tt.params)
+			response, statusCode, err := client.Request(ctx, tt.endpoint, tt.params)
 
 			assert.Equal(t, tt.wantStatusCode, statusCode)
 
@@ -202,7 +202,7 @@ func TestRateLimiting(t *testing.T) {
 	start := time.Now()
 	for i := 0; i < 3; i++ {
 		ctx := context.Background()
-		_, _, err := client.Get(ctx, "test", nil)
+		_, _, err := client.Request(ctx, "test", nil)
 		require.NoError(t, err)
 	}
 	duration := time.Since(start)
@@ -234,7 +234,7 @@ func TestRequestCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
 
-	_, _, err := client.Get(ctx, "test", nil)
+	_, _, err := client.Request(ctx, "test", nil)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
@@ -272,7 +272,7 @@ func TestClientRequestFormatting(t *testing.T) {
 		"limit": "10",
 	}
 
-	_, _, err := client.Get(ctx, "test-endpoint", params)
+	_, _, err := client.Request(ctx, "test-endpoint", params)
 	require.NoError(t, err)
 }
 
@@ -295,7 +295,7 @@ func TestVerboseLogging(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, _, err := client.Get(ctx, "test", nil)
+	_, _, err := client.Request(ctx, "test", nil)
 	require.NoError(t, err)
 
 	// No assertion needed - if verbose logging code crashes, the test will fail
