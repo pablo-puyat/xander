@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNewClient tests the client constructor
 func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -22,42 +21,37 @@ func TestNewClient(t *testing.T) {
 		wantError bool
 	}{
 		{
-			name:      "creates client with valid API key",
-			apiKey:    "test-key",
-			verbose:   false,
-			wantNil:   false,
-			wantHTTP:  true,
-			wantError: true,
+			name:     "creates client with valid API key",
+			apiKey:   "test-key",
+			verbose:  false,
+			wantNil:  false,
+			wantHTTP: true,
 		},
 		{
-			name:      "creates verbose client",
-			apiKey:    "test-key",
-			verbose:   true,
-			wantNil:   false,
-			wantHTTP:  true,
-			wantError: true,
+			name:     "creates verbose client",
+			apiKey:   "test-key",
+			verbose:  true,
+			wantNil:  false,
+			wantHTTP: true,
 		},
 		{
-			name:      "fails with empty API key",
-			apiKey:    "",
-			verbose:   false,
-			wantNil:   true,
-			wantHTTP:  false,
-			wantError: true,
+			name:     "fails with empty API key",
+			apiKey:   "",
+			verbose:  false,
+			wantNil:  true,
+			wantHTTP: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//client := NewClient(tt.apiKey, tt.verbose)
-			client, err := NewClient(tt.apiKey, tt.verbose)
+			client := NewClient(tt.apiKey, tt.verbose)
 
-			if tt.wantError && err != nil {
+			if tt.wantNil && assert.Nil(t, client) {
 				return
 			}
 
 			assert.NotNil(t, client)
-			assert.Nil(t, err)
 			assert.Equal(t, tt.apiKey, client.apiKey)
 			assert.Equal(t, tt.verbose, client.verbose)
 			assert.NotNil(t, client.httpClient)
@@ -65,7 +59,6 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
-// TestClientGet tests the basic Get method
 func TestClientGet(t *testing.T) {
 	tests := []struct {
 		name            string

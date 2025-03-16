@@ -30,9 +30,9 @@ type Client struct {
 	minRequestInterval time.Duration
 }
 
-func NewClient(apiKey string, verbose bool) (*Client, error) {
+func NewClient(apiKey string, verbose bool) *Client {
 	if apiKey == "" {
-		return nil, fmt.Errorf("API key is required")
+		return nil
 	}
 
 	return &Client{
@@ -46,7 +46,7 @@ func NewClient(apiKey string, verbose bool) (*Client, error) {
 		requestCount:       0,
 		requestCountReset:  time.Now().Add(time.Hour),
 		minRequestInterval: defaultRequestInterval,
-	}, nil
+	}
 }
 
 // APIResponse represents the standard ComicVine API response structure
