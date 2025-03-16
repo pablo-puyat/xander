@@ -7,12 +7,16 @@ import (
 	"strconv"
 	"strings"
 	"xander/internal/comic"
-	"xander/internal/parse"
 )
+
+// ComicVineClient defines the interface for the ComicVine API client
+type ComicVineClient interface {
+	GetIssue(series string, issueNumber string) (*Issue, error)
+}
 
 // ComicService represents a service for comic metadata operations
 type ComicService struct {
-	client  *Client
+	client  ComicVineClient
 	verbose bool
 }
 
@@ -60,31 +64,14 @@ type Result struct {
 	RawData map[string]interface{} // Complete raw response
 }
 
-// GetMetadata retrieves metadata for a comic file
-func (s *ComicService) GetMetadata(filename string) (*Result, error) {
-	// Extract info from the filename
-	series, issue, year, err := parse.ParseComicFilename(filename)
-	if err != nil {
-		if s.verbose {
-			log.Printf("Failed to parse filename '%s': %v", filename, err)
-		}
-		return nil, fmt.Errorf("failed to parse filename: %w", err)
-	}
-
-	// Validate the parsed series name
-	if isInvalidSeriesName(series) {
-		if s.verbose {
-			log.Printf("Skipping '%s': invalid series name '%s' appears to be a date", filename, series)
-		}
-		return nil, fmt.Errorf("invalid series name (appears to be a date): %s", series)
-	}
-
+// GetMetadataWithInfo retrieves metadata for a comic with pre-parsed information
+func (s *ComicService) GetMetadataWithInfo(series, issue, year string, filename string) (*Result, error) {
 	if s.verbose {
-		log.Printf("Parsed '%s' as Series='%s', Issue='%s', Year='%s'",
-			filename, series, issue, year)
+		log.Printf("Processing comic with Series='%s', Issue='%s', Year='%s', Filename='%s'",
+			series, issue, year, filename)
 	}
 
-	// Get issue from ComicVine
+	// Get issue from ComicVine API
 	comicInfo, err := s.client.GetIssue(series, issue)
 	if err != nil {
 		if s.verbose {
@@ -115,137 +102,158 @@ func (s *ComicService) GetMetadata(filename string) (*Result, error) {
 		RawData: comicInfo.RawData,
 	}
 
-	// Extract all the data from the API response
-
 	// Set image URL directly from the struct
 	result.CoverURL = comicInfo.Image.OriginalURL
 
 	// Extract additional data from raw data
 	if comicInfo.RawData != nil {
-		// Extract volume info and ensure it's correctly associated with this comic
-		if volumeData, ok := comicInfo.RawData["volume"].(map[string]interface{}); ok {
-			// Create a copy of the volume data to avoid sharing references
-			volumeCopy := make(map[string]interface{})
-			for k, v := range volumeData {
-				volumeCopy[k] = v
-			}
-
-			// Add issue-specific metadata to avoid duplicate volume data
-			volumeCopy["issue_id"] = comicInfo.ID // Ensure link to correct issue
-			volumeCopy["issue_number"] = issue    // Store the issue number
-
-			// Verify volume data - if name doesn't match the series, this is likely incorrect
-			if volumeName, ok := volumeCopy["name"].(string); ok {
-				if !strings.Contains(strings.ToLower(volumeName), strings.ToLower(series)) {
-					// Log the mismatch but don't immediately abort - try to fix
-					if s.verbose {
-						log.Printf("Warning: Volume name '%s' doesn't match series '%s', fixing...",
-							volumeName, series)
-					}
-					// Override with series name to ensure correct data
-					volumeCopy["name"] = series
-
-					// If we have ID data, check that too
-					if volID, ok := volumeCopy["id"].(float64); ok {
-						volumeCopy["original_id"] = volID // Keep original for reference
-						// We don't have the correct ID, but ensure it's unique at least
-						// Use a hash of the series name as a temporary ID
-						h := 0
-						for _, c := range series {
-							h = 31*h + int(c)
-						}
-						volumeCopy["id"] = h
-					}
-				}
-			}
-
-			result.Volume = volumeCopy
-
-			// Extract publisher from volume (using original volume data)
-			if pubData, ok := volumeData["publisher"].(map[string]interface{}); ok {
-				if pubName, ok := pubData["name"].(string); ok {
-					result.ApiPublisher = pubName
-				}
-			}
-		}
-
-		// Extract character data
-		if charData, ok := comicInfo.RawData["character_credits"].([]interface{}); ok {
-			for _, char := range charData {
-				if charMap, ok := char.(map[string]interface{}); ok {
-					result.Characters = append(result.Characters, charMap)
-				}
-			}
-		}
-
-		// Extract team data
-		if teamData, ok := comicInfo.RawData["team_credits"].([]interface{}); ok {
-			for _, team := range teamData {
-				if teamMap, ok := team.(map[string]interface{}); ok {
-					result.Teams = append(result.Teams, teamMap)
-				}
-			}
-		}
-
-		// Extract people data
-		if peopleData, ok := comicInfo.RawData["person_credits"].([]interface{}); ok {
-			for _, person := range peopleData {
-				if personMap, ok := person.(map[string]interface{}); ok {
-					result.People = append(result.People, personMap)
-				}
-			}
-		}
-
-		// Extract location data
-		if locData, ok := comicInfo.RawData["location_credits"].([]interface{}); ok {
-			for _, loc := range locData {
-				if locMap, ok := loc.(map[string]interface{}); ok {
-					result.Locations = append(result.Locations, locMap)
-				}
-			}
-		}
-
-		// Extract concept data
-		if conceptData, ok := comicInfo.RawData["concept_credits"].([]interface{}); ok {
-			for _, concept := range conceptData {
-				if conceptMap, ok := concept.(map[string]interface{}); ok {
-					result.Concepts = append(result.Concepts, conceptMap)
-				}
-			}
-		}
-
-		// Extract object data
-		if objData, ok := comicInfo.RawData["object_credits"].([]interface{}); ok {
-			for _, obj := range objData {
-				if objMap, ok := obj.(map[string]interface{}); ok {
-					result.Objects = append(result.Objects, objMap)
-				}
-			}
-		}
-
-		// Extract dates
-		if dateAdded, ok := comicInfo.RawData["date_added"].(string); ok {
-			result.DateAdded = dateAdded
-		}
-
-		if dateUpdated, ok := comicInfo.RawData["date_last_updated"].(string); ok {
-			result.DateLastUpdated = dateUpdated
-		}
-
-		// Store complete image data
-		if imgData, ok := comicInfo.RawData["image"].(map[string]interface{}); ok {
-			result.Image = imgData
-		}
+		s.extractVolumeInfo(comicInfo.RawData, result, issue)
+		s.extractCharacters(comicInfo.RawData, result)
+		s.extractTeams(comicInfo.RawData, result)
+		s.extractPeople(comicInfo.RawData, result)
+		s.extractLocations(comicInfo.RawData, result)
+		s.extractConcepts(comicInfo.RawData, result)
+		s.extractObjects(comicInfo.RawData, result)
+		s.extractDates(comicInfo.RawData, result)
+		s.extractImage(comicInfo.RawData, result)
 	}
 
 	// Store other data directly from the Issue struct
 	result.CoverDate = comicInfo.CoverDate
 	result.StoreDate = comicInfo.StoreDate
 
-	// The remaining data should already be set above through the RawData extraction
-	// This avoids double-assignment
-
 	return result, nil
+}
+
+// Helper methods for extracting data from the raw response
+func (s *ComicService) extractVolumeInfo(rawData map[string]interface{}, result *Result, issue string) {
+	if volumeData, ok := rawData["volume"].(map[string]interface{}); ok {
+		// Create a copy of the volume data to avoid sharing references
+		volumeCopy := make(map[string]interface{})
+		for k, v := range volumeData {
+			volumeCopy[k] = v
+		}
+
+		// Add issue-specific metadata to avoid duplicate volume data
+		volumeCopy["issue_id"] = result.ComicVineID
+		volumeCopy["issue_number"] = issue
+
+		// Verify volume data - if name doesn't match the series, this is likely incorrect
+		if volumeName, ok := volumeCopy["name"].(string); ok {
+			if !strings.Contains(strings.ToLower(volumeName), strings.ToLower(result.Series)) {
+				// Log the mismatch but don't immediately abort - try to fix
+				if s.verbose {
+					log.Printf("Warning: Volume name '%s' doesn't match series '%s', fixing...",
+						volumeName, result.Series)
+				}
+				// Override with series name to ensure correct data
+				volumeCopy["name"] = result.Series
+
+				// If we have ID data, check that too
+				if volID, ok := volumeCopy["id"].(float64); ok {
+					volumeCopy["original_id"] = volID // Keep original for reference
+					// We don't have the correct ID, but ensure it's unique at least
+					// Use a hash of the series name as a temporary ID
+					h := 0
+					for _, c := range result.Series {
+						h = 31*h + int(c)
+					}
+					volumeCopy["id"] = h
+				}
+			}
+		}
+
+		result.Volume = volumeCopy
+
+		// Extract publisher from volume (using original volume data)
+		if pubData, ok := volumeData["publisher"].(map[string]interface{}); ok {
+			if pubName, ok := pubData["name"].(string); ok {
+				result.ApiPublisher = pubName
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractCharacters(rawData map[string]interface{}, result *Result) {
+	if charData, ok := rawData["character_credits"].([]interface{}); ok {
+		for _, char := range charData {
+			if charMap, ok := char.(map[string]interface{}); ok {
+				result.Characters = append(result.Characters, charMap)
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractTeams(rawData map[string]interface{}, result *Result) {
+	if teamData, ok := rawData["team_credits"].([]interface{}); ok {
+		for _, team := range teamData {
+			if teamMap, ok := team.(map[string]interface{}); ok {
+				result.Teams = append(result.Teams, teamMap)
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractPeople(rawData map[string]interface{}, result *Result) {
+	if peopleData, ok := rawData["person_credits"].([]interface{}); ok {
+		for _, person := range peopleData {
+			if personMap, ok := person.(map[string]interface{}); ok {
+				result.People = append(result.People, personMap)
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractLocations(rawData map[string]interface{}, result *Result) {
+	if locData, ok := rawData["location_credits"].([]interface{}); ok {
+		for _, loc := range locData {
+			if locMap, ok := loc.(map[string]interface{}); ok {
+				result.Locations = append(result.Locations, locMap)
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractConcepts(rawData map[string]interface{}, result *Result) {
+	if conceptData, ok := rawData["concept_credits"].([]interface{}); ok {
+		for _, concept := range conceptData {
+			if conceptMap, ok := concept.(map[string]interface{}); ok {
+				result.Concepts = append(result.Concepts, conceptMap)
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractObjects(rawData map[string]interface{}, result *Result) {
+	if objData, ok := rawData["object_credits"].([]interface{}); ok {
+		for _, obj := range objData {
+			if objMap, ok := obj.(map[string]interface{}); ok {
+				result.Objects = append(result.Objects, objMap)
+			}
+		}
+	}
+}
+
+func (s *ComicService) extractDates(rawData map[string]interface{}, result *Result) {
+	if dateAdded, ok := rawData["date_added"].(string); ok {
+		result.DateAdded = dateAdded
+	}
+
+	if dateUpdated, ok := rawData["date_last_updated"].(string); ok {
+		result.DateLastUpdated = dateUpdated
+	}
+}
+
+func (s *ComicService) extractImage(rawData map[string]interface{}, result *Result) {
+	if imgData, ok := rawData["image"].(map[string]interface{}); ok {
+		result.Image = imgData
+	}
+}
+
+// GetMetadata is a placeholder that should be implemented by the user
+// to integrate with their parser to extract metadata from filenames
+func (s *ComicService) GetMetadata(filename string) (*Result, error) {
+	return nil, fmt.Errorf("method not implemented - needs external filename parser")
 }
 
 // GetMetadataForFiles processes multiple files and returns their metadata

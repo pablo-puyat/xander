@@ -1,0 +1,19 @@
+{
+  "statusCode": 1,
+  "results": [
+    {
+      "id": 12345,
+      "name": "Test Issue",
+      "issue_number": "1",
+      "volume": {
+        "id": 67890,
+        "name": "Test Series"
+      },
+      "cover_date": "2020-01-01",
+      "image": {
+        "original_url": "http://example.com/cover.jpg"
+      },
+      "description": "Test description"
+    }
+  ]
+}

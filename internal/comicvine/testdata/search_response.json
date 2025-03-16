@@ -1,0 +1,441 @@
+{
+  "error": "OK",
+  "limit": 10,
+  "offset": 0,
+  "number_of_page_results": 10,
+  "number_of_total_results": 1037,
+  "status_code": 1,
+  "results": [
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-160860\/",
+      "count_of_issues": 5,
+      "date_added": "2024-11-04 11:16:32",
+      "date_last_updated": "2024-11-04 11:17:05",
+      "deck": null,
+      "description": null,
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1076354\/",
+        "id": 1076354,
+        "name": "Last Dust of Krypton - Part One: Down in the Dirt",
+        "issue_number": "1"
+      },
+      "id": 160860,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/11\/110017\/9528005-wwww.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/11\/110017\/9528005-wwww.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/11\/110017\/9528005-wwww.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/11\/110017\/9528005-wwww.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/11\/110017\/9528005-wwww.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/11\/110017\/9528005-wwww.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/11\/110017\/9528005-wwww.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/11\/110017\/9528005-wwww.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11\/110017\/9528005-wwww.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1098329\/",
+        "id": 1098329,
+        "name": "Last Dust of Krypton, Finale: Ad Astra Per Aspera",
+        "issue_number": "5"
+      },
+      "name": "Absolute Superman",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman\/4050-160860\/",
+      "start_year": "2025",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-161397\/",
+      "count_of_issues": 1,
+      "date_added": "2024-12-02 14:50:30",
+      "date_last_updated": "2024-12-02 14:50:44",
+      "deck": null,
+      "description": null,
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1080070\/",
+        "id": 1080070,
+        "name": null,
+        "issue_number": "1"
+      },
+      "id": 161397,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/11\/110017\/9552734-wwww.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/11\/110017\/9552734-wwww.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/11\/110017\/9552734-wwww.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/11\/110017\/9552734-wwww.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/11\/110017\/9552734-wwww.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/11\/110017\/9552734-wwww.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/11\/110017\/9552734-wwww.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/11\/110017\/9552734-wwww.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11\/110017\/9552734-wwww.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1080070\/",
+        "id": 1080070,
+        "name": null,
+        "issue_number": "1"
+      },
+      "name": "Absolute Superman Noir Edition",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-noir-edition\/4050-161397\/",
+      "start_year": "2025",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-66900\/",
+      "count_of_issues": 2,
+      "date_added": "2013-08-28 22:08:21",
+      "date_last_updated": "2013-08-28 22:09:04",
+      "deck": null,
+      "description": "<p>Series of Absolute editions collecting the <a href=\"\/\/www.comicvine.com\/supermanbatman\/4050-10938\/\" data-ref-id=\"4050-10938\">Superman\/Batman<\/a> series.<\/p>",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-424032\/",
+        "id": 424032,
+        "name": "Volume 1",
+        "issue_number": "1"
+      },
+      "id": 66900,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/67663\/3276023-01.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/67663\/3276023-01.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/67663\/3276023-01.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/67663\/3276023-01.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/67663\/3276023-01.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/67663\/3276023-01.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/67663\/3276023-01.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/67663\/3276023-01.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/67663\/3276023-01.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-452826\/",
+        "id": 452826,
+        "name": "Volume 2",
+        "issue_number": "2"
+      },
+      "name": "Absolute Superman\/Batman",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-supermanbatman\/4050-66900\/",
+      "start_year": "2013",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-37755\/",
+      "count_of_issues": 1,
+      "date_added": "2010-12-23 07:25:32",
+      "date_last_updated": "2020-01-18 16:25:12",
+      "deck": "Absolute Superman for Tomorrow",
+      "description": "<figure data-align=\"right\" data-embed-type=\"image\" data-img-src=\"https:\/\/static.comicvine.com\/uploads\/original\/6\/62444\/1578758-29336c061ec66140a63a6878f3685f721070676e.pjpg.jpeg\" data-ref-id=\"1300-1578758\" data-size=\"medium\" data-ratio=\"0.75\"><a class=\"fluid-height\" style=\"padding-bottom:75.0%\" href=\"https:\/\/static.comicvine.com\/uploads\/original\/6\/62444\/1578758-29336c061ec66140a63a6878f3685f721070676e.pjpg.jpeg\" data-ref-id=\"1300-1578758\"><img alt=\" Book in dust jacket to the left, slipcase to the right\" src=\"https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1578758-29336c061ec66140a63a6878f3685f721070676e.pjpg.jpeg\" srcset=\"https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578758-29336c061ec66140a63a6878f3685f721070676e.pjpg.jpeg 760w, https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1578758-29336c061ec66140a63a6878f3685f721070676e.pjpg.jpeg 480w\" sizes=\"(max-width: 480px) 100vw, 480px\" data-width=\"480\"><\/a><figcaption> Book in dust jacket to the left, slipcase to the right<\/figcaption><\/figure> <i>Overview: <br\/>  <br\/>From Brian Azzarello (100 BULLETS) and artists Jim Lee and Scott  Williams (BATMAN: HUSH) comes this oversized, slipcased volume  collecting the entire 12-issue \"<a data-ref-id=\"4045-56217\" href=\"\/for-tomorrow\/4045-56217\/\" slug=\"for-tomorrow\"> <\/a><\/i><i> <\/i><i> <\/i><a data-ref-id=\"4045-56217\" href=\"\/for-tomorrow\/4045-56217\/\" slug=\"for-tomorrow\"> <i>For Tomorrow<\/i><\/a>\" epic originally presented  in <a data-ref-id=\"4050-3816\" href=\"\/superman\/4050-3816\/\" slug=\"superman\"> <i>   SUPERMAN<\/i><\/a> #<a data-ref-id=\"4000-91408\" href=\"\/superman-for-tomorrow-part-one\/4000-91408\/\" slug=\"superman-for-tomorrow-part-one\"> <i>  204<\/i><\/a>-<a data-ref-id=\"4000-100955\" href=\"\/superman-for-tomorrow-part-twelve\/4000-100955\/\" slug=\"superman-for-tomorrow-part-twelve\"> <i> 215<\/i><\/a>!",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-250714\/",
+        "id": 250714,
+        "name": "Absolute Superman for Tomorrow",
+        "issue_number": "1"
+      },
+      "id": 37755,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-250714\/",
+        "id": 250714,
+        "name": "Absolute Superman for Tomorrow",
+        "issue_number": "1"
+      },
+      "name": "Absolute Superman for Tomorrow",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-for-tomorrow\/4050-37755\/",
+      "start_year": "2009",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-37318\/",
+      "count_of_issues": 1,
+      "date_added": "2010-12-07 11:48:01",
+      "date_last_updated": "2012-10-18 05:09:35",
+      "deck": "absolute hardcover",
+      "description": "<p>The Absolute collection of the award winning <a data-ref-id=\"4050-18139\" href=\"\/all-star-superman\/4050-18139\/\" slug=\"all-star-superman\"> All Star Superman<\/a> series.  This is an over-sized hardcover, with slipcase, dust jacket and bonus sketches pages. <\/p>",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-248364\/",
+        "id": 248364,
+        "name": "Absolute All Star Superman",
+        "issue_number": "1"
+      },
+      "id": 37318,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-248364\/",
+        "id": 248364,
+        "name": "Absolute All Star Superman",
+        "issue_number": "1"
+      },
+      "name": "Absolute All Star Superman",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-all-star-superman\/4050-37318\/",
+      "start_year": "2010",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-38153\/",
+      "count_of_issues": 1,
+      "date_added": "2011-01-05 22:04:07",
+      "date_last_updated": "2013-01-14 16:40:50",
+      "deck": null,
+      "description": "<p>The third trade from the <a data-ref-id=\"4050-10938\" href=\"\/supermanbatman\/4050-10938\/\" slug=\"supermanbatman\">Superman\/Batman<\/a> series which reprints issues #14-18 of the <a data-ref-id=\"4045-57016\" href=\"\/absolute-power\/4045-57016\/\" slug=\"absolute-power\">Absolute Power<\/a> story arc.<\/p>",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-254902\/",
+        "id": 254902,
+        "name": "Absolute Power",
+        "issue_number": "1"
+      },
+      "id": 38153,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/8\/83050\/1603217-sb_ap.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/8\/83050\/1603217-sb_ap.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/8\/83050\/1603217-sb_ap.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/8\/83050\/1603217-sb_ap.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/8\/83050\/1603217-sb_ap.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/8\/83050\/1603217-sb_ap.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/8\/83050\/1603217-sb_ap.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/8\/83050\/1603217-sb_ap.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/8\/83050\/1603217-sb_ap.jpg",
+        "image_tags": "All Images,Covers"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-254902\/",
+        "id": 254902,
+        "name": "Absolute Power",
+        "issue_number": "1"
+      },
+      "name": "Superman\/Batman: Absolute Power",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/supermanbatman-absolute-power\/4050-38153\/",
+      "start_year": "2006",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-158382\/",
+      "count_of_issues": 10,
+      "date_added": "2024-06-03 07:06:28",
+      "date_last_updated": "2024-06-03 07:06:59",
+      "deck": null,
+      "description": "<p>Italian publication.<\/p>",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1058421\/",
+        "id": 1058421,
+        "name": "La cittadella cieca",
+        "issue_number": "1"
+      },
+      "id": 158382,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/11\/110017\/9378938-000cover.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/11\/110017\/9378938-000cover.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/11\/110017\/9378938-000cover.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/11\/110017\/9378938-000cover.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/11\/110017\/9378938-000cover.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/11\/110017\/9378938-000cover.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/11\/110017\/9378938-000cover.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/11\/110017\/9378938-000cover.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11\/110017\/9378938-000cover.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1058437\/",
+        "id": 1058437,
+        "name": "Cronache metalliche",
+        "issue_number": "10"
+      },
+      "name": "Absolute Moebius",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-2350\/",
+        "id": 2350,
+        "name": "Panini Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-moebius\/4050-158382\/",
+      "start_year": "2012",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-158685\/",
+      "count_of_issues": 4,
+      "date_added": "2024-07-02 05:01:26",
+      "date_last_updated": "2024-07-02 05:01:40",
+      "deck": null,
+      "description": null,
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1061832\/",
+        "id": 1061832,
+        "name": "Chapter One: Powerless",
+        "issue_number": "1"
+      },
+      "id": 158685,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/11\/110017\/9403363-wwww.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/11\/110017\/9403363-wwww.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/11\/110017\/9403363-wwww.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/11\/110017\/9403363-wwww.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/11\/110017\/9403363-wwww.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/11\/110017\/9403363-wwww.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/11\/110017\/9403363-wwww.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/11\/110017\/9403363-wwww.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11\/110017\/9403363-wwww.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1072168\/",
+        "id": 1072168,
+        "name": "Chapter Four: Showdown",
+        "issue_number": "4"
+      },
+      "name": "Absolute Power",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-power\/4050-158685\/",
+      "start_year": "2024",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-37762\/",
+      "count_of_issues": 2,
+      "date_added": "2010-12-23 10:39:52",
+      "date_last_updated": "2023-05-25 22:15:05",
+      "deck": "The Absolute Authority 1 and 2",
+      "description": "<p>A set of two Oversized Hardcovers in slipcases that collects the run of the <a data-ref-id=\"4050-7499\" href=\"\/the-authority\/4050-7499\/\" slug=\"the-authority\"> Authority <\/a>written by both Warren Ellis and Mark Millar.<\/p>",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-250724\/",
+        "id": 250724,
+        "name": "Vol. 1",
+        "issue_number": "1"
+      },
+      "id": 37762,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/62444\/1578949-1777_400x600.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1578949-1777_400x600.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/62444\/1578949-1777_400x600.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/62444\/1578949-1777_400x600.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/62444\/1578949-1777_400x600.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/62444\/1578949-1777_400x600.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/62444\/1578949-1777_400x600.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/62444\/1578949-1777_400x600.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578949-1777_400x600.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-250727\/",
+        "id": 250727,
+        "name": "Absolute Authority Vol. 2",
+        "issue_number": "2"
+      },
+      "name": "Absolute Authority",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-authority\/4050-37762\/",
+      "start_year": "2002",
+      "resource_type": "volume"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-82474\/",
+      "count_of_issues": 2,
+      "date_added": "2015-06-08 06:30:44",
+      "date_last_updated": "2023-05-30 00:35:02",
+      "deck": null,
+      "description": "<p>Series of Absolute hardcovers collecting <a href=\"\/transmetropolitan\/4050-5989\/\" data-ref-id=\"4050-5989\">Transmetropolitan<\/a>.<\/p>",
+      "first_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-491495\/",
+        "id": 491495,
+        "name": "Volume 1",
+        "issue_number": "1"
+      },
+      "id": 82474,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/67663\/7702965-1724505173-19805.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/67663\/7702965-1724505173-19805.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/67663\/7702965-1724505173-19805.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/67663\/7702965-1724505173-19805.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/67663\/7702965-1724505173-19805.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/67663\/7702965-1724505173-19805.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/67663\/7702965-1724505173-19805.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/67663\/7702965-1724505173-19805.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/67663\/7702965-1724505173-19805.jpg",
+        "image_tags": "All Images"
+      },
+      "last_issue": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-523511\/",
+        "id": 523511,
+        "name": "Volume 2",
+        "issue_number": "2"
+      },
+      "name": "Absolute Transmetropolitan",
+      "publisher": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/publisher\/4010-10\/",
+        "id": 10,
+        "name": "DC Comics"
+      },
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-transmetropolitan\/4050-82474\/",
+      "start_year": "2015",
+      "resource_type": "volume"
+    }
+  ],
+  "version": "1.0"
+}

@@ -1,180 +1,308 @@
 package comicvine
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+// TestNewClient tests the client constructor
 func TestNewClient(t *testing.T) {
-	apiKey := "test-api-key"
-	client := NewClient(apiKey, false)
-
-	if client.apiKey != apiKey {
-		t.Errorf("NewClient() apiKey = %v, want %v", client.apiKey, apiKey)
+	tests := []struct {
+		name     string
+		apiKey   string
+		verbose  bool
+		wantNil  bool
+		wantHTTP bool
+	}{
+		{
+			name:     "creates client with valid API key",
+			apiKey:   "test-key",
+			verbose:  false,
+			wantNil:  false,
+			wantHTTP: true,
+		},
+		{
+			name:     "creates verbose client",
+			apiKey:   "test-key",
+			verbose:  true,
+			wantNil:  false,
+			wantHTTP: true,
+		},
+		{
+			name:     "fails with empty API key",
+			apiKey:   "",
+			verbose:  false,
+			wantNil:  true,
+			wantHTTP: false,
+		},
 	}
 
-	if client.httpClient == nil {
-		t.Error("NewClient() httpClient is nil, want non-nil")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewClient(tt.apiKey, tt.verbose)
+			
+			if tt.wantNil {
+				assert.Nil(t, client)
+				return
+			}
+			
+			assert.NotNil(t, client)
+			assert.Equal(t, tt.apiKey, client.apiKey)
+			assert.Equal(t, tt.verbose, client.verbose)
+			assert.NotNil(t, client.httpClient)
+		})
 	}
 }
 
-func TestGetIssue(t *testing.T) {
-	// Create a test server that returns a mock response
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Verify the request
-		if r.URL.Path != "/api/issues" {
-			t.Errorf("Expected URL path to be /api/issues, got %s", r.URL.Path)
-		}
-
-		query := r.URL.Query()
-		if query.Get("api_key") != "test-api-key" {
-			t.Errorf("Expected api_key to be test-api-key, got %s", query.Get("api_key"))
-		}
-
-		if query.Get("format") != "json" {
-			t.Errorf("Expected format to be json, got %s", query.Get("format"))
-		}
-
-		// Return a mock response
-		mockResponse := Response{
-			StatusCode: 1,
-			Results: []Issue{
-				{
-					ID:          12345,
-					Name:        "Test Issue",
-					IssueNumber: "1",
-					Volume: Volume{
-						ID:   67890,
-						Name: "Test Series",
-					},
-					CoverDate: "2020-01-01",
-					Image: Image{
-						OriginalURL: "http://example.com/cover.jpg",
-					},
-					Description: "Test description",
-				},
+// TestClientGet tests the basic Get method
+func TestClientGet(t *testing.T) {
+	tests := []struct {
+		name           string
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		endpoint       string
+		params         map[string]string
+		wantErr        bool
+		wantErrContains string
+		wantStatusCode int
+		wantContains   string
+	}{
+		{
+			name: "successful response",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/api/issues", r.URL.Path)
+				assert.Equal(t, "test-key", r.URL.Query().Get("api_key"))
+				assert.Equal(t, "json", r.URL.Query().Get("format"))
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"status_code":1,"results":[{"id":123}]}`))
 			},
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
-	}))
-	defer server.Close()
-
-	// Create a client that uses the test server
-	client := &Client{
-		apiKey:     "test-api-key",
-		httpClient: server.Client(),
-		cache:      make(map[string]CacheEntry),
+			endpoint: "issues",
+			params: map[string]string{
+				"query": "batman",
+				"limit": "10",
+			},
+			wantErr:        false,
+			wantStatusCode: 200,
+			wantContains:   `"id":123`,
+		},
+		{
+			name: "api error response",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"status_code":100,"error":"Invalid API key"}`))
+			},
+			endpoint: "issues",
+			params: map[string]string{
+				"query": "batman",
+			},
+			wantErr:         true,
+			wantErrContains: "API error",
+			wantStatusCode:  200,
+		},
+		{
+			name: "http error response",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(`Server Error`))
+			},
+			endpoint: "issues",
+			params: map[string]string{
+				"query": "batman",
+			},
+			wantErr:         true,
+			wantErrContains: "unexpected status code: 500",
+			wantStatusCode:  500,
+		},
+		{
+			name: "rate limit response",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusTooManyRequests)
+				w.Header().Set("Retry-After", "60")
+				w.Write([]byte(`Rate limited`))
+			},
+			endpoint: "issues",
+			params: map[string]string{
+				"query": "batman",
+			},
+			wantErr:         true,
+			wantErrContains: "rate limit exceeded",
+			wantStatusCode:  429,
+		},
+		{
+			name: "invalid json response",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`invalid json`))
+			},
+			endpoint: "issues",
+			params: map[string]string{
+				"query": "batman",
+			},
+			wantErr:         true,
+			wantErrContains: "failed to parse",
+			wantStatusCode:  200,
+		},
 	}
-	// Override the base URL to use the test server
-	originalBaseURL := baseURL
-	baseURL = server.URL + "/api"
-	defer func() { baseURL = originalBaseURL }()
 
-	// Call the method under test
-	issue, err := client.GetIssue("Test Series", "1")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
+			defer server.Close()
 
-	// Verify the result
-	if err != nil {
-		t.Errorf("GetIssue() error = %v, want nil", err)
-	}
+			client := &Client{
+				apiKey:     "test-key",
+				baseURL:    server.URL + "/api",
+				httpClient: server.Client(),
+				verbose:    true,
+			}
 
-	if issue == nil {
-		t.Fatal("GetIssue() issue is nil, want non-nil")
-	}
+			ctx := context.Background()
+			response, statusCode, err := client.Get(ctx, tt.endpoint, tt.params)
 
-	if issue.ID != 12345 {
-		t.Errorf("GetIssue() issue.ID = %v, want %v", issue.ID, 12345)
-	}
+			assert.Equal(t, tt.wantStatusCode, statusCode)
 
-	if issue.Name != "Test Issue" {
-		t.Errorf("GetIssue() issue.Name = %v, want %v", issue.Name, "Test Issue")
-	}
-
-	if issue.IssueNumber != "1" {
-		t.Errorf("GetIssue() issue.IssueNumber = %v, want %v", issue.IssueNumber, "1")
-	}
-
-	if issue.Volume.Name != "Test Series" {
-		t.Errorf("GetIssue() issue.Volume.Name = %v, want %v", issue.Volume.Name, "Test Series")
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErrContains)
+				assert.Nil(t, response)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, response)
+				responseStr := string(response)
+				assert.Contains(t, responseStr, tt.wantContains)
+			}
+		})
 	}
 }
 
-func TestGetIssue_Error(t *testing.T) {
-	// Create a test server that returns an error response
+// TestRateLimiting tests the client's rate limiting functionality
+func TestRateLimiting(t *testing.T) {
+	requestCount := 0
+	
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Return a mock error response
-		mockResponse := Response{
-			StatusCode: 100,
-			Error:      "API Error",
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		requestCount++
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status_code":1,"results":[]}`))
 	}))
 	defer server.Close()
 
-	// Create a client that uses the test server
 	client := &Client{
-		apiKey:     "test-api-key",
-		httpClient: server.Client(),
-		cache:      make(map[string]CacheEntry),
-	}
-	// Override the base URL to use the test server
-	originalBaseURL := baseURL
-	baseURL = server.URL + "/api"
-	defer func() { baseURL = originalBaseURL }()
-
-	// Call the method under test
-	issue, err := client.GetIssue("Test Series", "1")
-
-	// Verify the result
-	if err == nil {
-		t.Error("GetIssue() error is nil, want non-nil")
+		apiKey:                "test-key",
+		baseURL:               server.URL,
+		httpClient:            server.Client(),
+		verbose:               false,
+		lastRequestTime:       time.Time{},
+		minRequestInterval:    500 * time.Millisecond,
 	}
 
-	if issue != nil {
-		t.Errorf("GetIssue() issue = %v, want nil", issue)
+	// Make several requests in a loop
+	start := time.Now()
+	for i := 0; i < 3; i++ {
+		ctx := context.Background()
+		_, _, err := client.Get(ctx, "test", nil)
+		require.NoError(t, err)
 	}
+	duration := time.Since(start)
+
+	// Verify time elapsed is at least the min interval * (requests-1)
+	assert.GreaterOrEqual(t, duration, client.minRequestInterval*2, 
+		"Rate limiting should enforce minimum intervals between requests")
+	assert.Equal(t, 3, requestCount, "All requests should have been processed")
 }
 
-func TestGetIssue_NoResults(t *testing.T) {
-	// Create a test server that returns an empty result
+// TestRequestCancellation tests that requests can be cancelled via context
+func TestRequestCancellation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Return a mock response with no results
-		mockResponse := Response{
-			StatusCode: 1,
-			Results:    []Issue{},
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		// Simulate a slow endpoint
+		time.Sleep(2 * time.Second)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status_code":1}`))
 	}))
 	defer server.Close()
 
-	// Create a client that uses the test server
 	client := &Client{
-		apiKey:     "test-api-key",
+		apiKey:     "test-key",
+		baseURL:    server.URL,
 		httpClient: server.Client(),
-		cache:      make(map[string]CacheEntry),
-	}
-	// Override the base URL to use the test server
-	originalBaseURL := baseURL
-	baseURL = server.URL + "/api"
-	defer func() { baseURL = originalBaseURL }()
-
-	// Call the method under test
-	issue, err := client.GetIssue("Test Series", "1")
-
-	// Verify the result
-	if err == nil {
-		t.Error("GetIssue() error is nil, want non-nil")
+		verbose:    false,
 	}
 
-	if issue != nil {
-		t.Errorf("GetIssue() issue = %v, want nil", issue)
+	// Create a context with timeout shorter than the server delay
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	_, _, err := client.Get(ctx, "test", nil)
+	
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "context deadline exceeded")
+}
+
+// TestClientRequestFormatting tests that the client properly formats requests
+func TestClientRequestFormatting(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Verify request URL components
+		assert.Equal(t, "/test-endpoint", r.URL.Path)
+		
+		// Check query parameters
+		query := r.URL.Query()
+		assert.Equal(t, "test-key", query.Get("api_key"))
+		assert.Equal(t, "json", query.Get("format"))
+		assert.Equal(t, "Batman", query.Get("query"))
+		assert.Equal(t, "10", query.Get("limit"))
+		
+		// Return a successful response
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status_code":1,"results":[]}`))
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-key",
+		baseURL:    server.URL,
+		httpClient: server.Client(),
+		verbose:    false,
 	}
+
+	ctx := context.Background()
+	params := map[string]string{
+		"query": "Batman",
+		"limit": "10",
+	}
+	
+	_, _, err := client.Get(ctx, "test-endpoint", params)
+	require.NoError(t, err)
+}
+
+// TestVerboseLogging tests the verbose logging option (indirectly)
+func TestVerboseLogging(t *testing.T) {
+	// This test doesn't really validate the log output,
+	// just ensures the code path doesn't crash when verbose is on
+	
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status_code":1,"results":[]}`))
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-key",
+		baseURL:    server.URL,
+		httpClient: server.Client(),
+		verbose:    true, // Enable verbose logging
+	}
+
+	ctx := context.Background()
+	_, _, err := client.Get(ctx, "test", nil)
+	require.NoError(t, err)
+	
+	// No assertion needed - if verbose logging code crashes, the test will fail
 }
