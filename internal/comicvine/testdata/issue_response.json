@@ -1,0 +1,395 @@
+{
+  "error": "OK",
+  "limit": 10,
+  "offset": 0,
+  "number_of_page_results": 10,
+  "number_of_total_results": 160912,
+  "status_code": 1,
+  "results": [
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-250714\/",
+      "cover_date": "2009-05-29",
+      "date_added": "2010-12-23 07:31:13",
+      "date_last_updated": "2013-02-05 00:31:52",
+      "deck": null,
+      "description": "<p><i>Overview:<\/i><\/p><p><i>From Brian Azzarello (100 BULLETS) and artists Jim Lee and Scott Williams (BATMAN: HUSH) comes this oversized, slipcased volume collecting the entire 12-issue \"For Tomorrow\" epic originally presented in SUPERMAN #204-215!<\/i><\/p><p><i>A cataclysmic event has struck the Earth. Millions of people have vanished without a trace. No one is left unaffected — not even Superman! Now, the Man of Steel must face the mystery of how millions of people vanished without a trace, only to find that he may be responsible. But the solution leads to a royal rumble with Wonder Woman! And after a battle with the deadly Equus, Superman comes face-to-face with the villain who has been responsible for turning his life upside-down!<\/i><\/p><p><i>Featuring an introduction by Azzarello, an afterward and sketch section by Lee and a newly illustrated 2-page origin of Superman by Lee and Williams!<\/i><\/p><figure data-align=\"center\" data-embed-type=\"image\" data-img-src=\"https:\/\/static.comicvine.com\/uploads\/original\/6\/62444\/1578761-38a2615156683abb62ff9750919fa60bc81aca94.pjpg.jpeg\" data-ref-id=\"1300-1578761\" data-size=\"large\" data-ratio=\"0.75\"><a class=\"fluid-height\" style=\"padding-bottom:75.0%\" href=\"https:\/\/static.comicvine.com\/uploads\/original\/6\/62444\/1578761-38a2615156683abb62ff9750919fa60bc81aca94.pjpg.jpeg\" data-ref-id=\"1300-1578761\"><img alt=\"A Visual to show how long and oversized the book is. The pages are blown up to 8 1\/2-inches. x 12 1\/2-inches.\" src=\"https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578761-38a2615156683abb62ff9750919fa60bc81aca94.pjpg.jpeg\" srcset=\"https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578761-38a2615156683abb62ff9750919fa60bc81aca94.pjpg.jpeg 760w, https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1578761-38a2615156683abb62ff9750919fa60bc81aca94.pjpg.jpeg 480w\" sizes=\"(max-width: 760px) 100vw, 760px\" data-width=\"760\"><\/a><figcaption>A Visual to show how long and oversized the book is. The pages are blown up to 8 1\/2-inches. x 12 1\/2-inches.<\/figcaption><\/figure>",
+      "has_staff_review": false,
+      "id": 250714,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578639-51zcw4vrcvl._ss500_.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [
+        {
+          "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1578756-11160_400x600.jpg",
+          "id": 1578756,
+          "caption": null,
+          "image_tags": "All Images"
+        }
+      ],
+      "issue_number": "1",
+      "name": "Absolute Superman for Tomorrow",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-for-tomorrow-1-absolute-superman\/4000-250714\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-37755\/",
+        "id": 37755,
+        "name": "Absolute Superman for Tomorrow",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-for-tomorrow\/4050-37755\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-1080070\/",
+      "cover_date": "2025-02-01",
+      "date_added": "2024-12-02 14:50:55",
+      "date_last_updated": "2024-12-02 14:51:21",
+      "deck": null,
+      "description": "<p><em><b>SUPERSTARS JASON AARON AND RAFA SANDOVAL UNLEASH A SHOCKING NEW TAKE ON THE LAST SON OF KRYPTON!<\/b><\/em><\/p><p><em>Without the fortress...without the family...without a home...what's left is the Absolute Man of Steel!<\/em><\/p>",
+      "has_staff_review": false,
+      "id": 1080070,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/11\/110017\/9552735-wwww.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/11\/110017\/9552735-wwww.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/11\/110017\/9552735-wwww.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/11\/110017\/9552735-wwww.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/11\/110017\/9552735-wwww.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/11\/110017\/9552735-wwww.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/11\/110017\/9552735-wwww.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/11\/110017\/9552735-wwww.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11\/110017\/9552735-wwww.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [],
+      "issue_number": "1",
+      "name": null,
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-noir-edition-1\/4000-1080070\/",
+      "store_date": "2024-12-04",
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-161397\/",
+        "id": 161397,
+        "name": "Absolute Superman Noir Edition",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-noir-edition\/4050-161397\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-254902\/",
+      "cover_date": "2006-11-08",
+      "date_added": "2011-01-05 22:04:07",
+      "date_last_updated": "2012-03-19 15:54:49",
+      "deck": null,
+      "description": "<i>A new softcover collecting the blockbuster story \"Absolute Power,\" originally presented in SUPERMAN\/BATMAN #14-18! In this reality-bending tale, Superman and Batman rule Earth with an iron fist. Before long, the World's Finest Duo is sent careening through a series of bizarre alternate earths, facing an assortment of classic DC characters including Kamandi, Sgt. Rock, Haunted Tank, and many more! <\/i><i>   <\/i>",
+      "has_staff_review": false,
+      "id": 254902,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/8\/83050\/1603217-sb_ap.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/8\/83050\/1603217-sb_ap.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/8\/83050\/1603217-sb_ap.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/8\/83050\/1603217-sb_ap.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/8\/83050\/1603217-sb_ap.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/8\/83050\/1603217-sb_ap.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/8\/83050\/1603217-sb_ap.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/8\/83050\/1603217-sb_ap.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/8\/83050\/1603217-sb_ap.jpg",
+        "image_tags": "All Images,Covers"
+      },
+      "associated_images": [],
+      "issue_number": "1",
+      "name": "Absolute Power",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/supermanbatman-absolute-power-1-absolute-power\/4000-254902\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-38153\/",
+        "id": 38153,
+        "name": "Superman\/Batman: Absolute Power",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/supermanbatman-absolute-power\/4050-38153\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-248364\/",
+      "cover_date": "2010-11-02",
+      "date_added": "2010-12-07 11:50:22",
+      "date_last_updated": "2017-02-15 04:20:00",
+      "deck": null,
+      "description": "<p><i>The Eisner Award-winning 12-issue series from Grant Morrison and Frank Quitely is now available in Absolute format! The Man of Steel battles Bizarro, Zibarro and more before facing the final revenge of Lex Luthor. Also includes a bonus sketchbook section and more!<\/i><\/p><p><em>The amazing creative team of Grant Morrison (BATMAN) and Frank Quitely (WE3) create a new vision of the World's First Super-Hero! Now in trade paperback, this volume collects the first six issues of the acclaimed series and features Lex Luthor, Jimmy Olsen, Lois Lane, Bizarro, and more!<\/em><\/p><p><i>The Man of Steel goes toe-to-toe with Bizarro, his imperfect duplicate, and the new Zibaro, also from the Bizarro planet. Plus, more exciting adventures that take Superman across the universe and back in these tales from ALL-STAR SUPERMAN<\/i><\/p>",
+      "has_staff_review": false,
+      "id": 248364,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/7\/71975\/2654122-__kgrhqz__l_e6b9dtn_lbos_ipeusg__60_57.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [
+        {
+          "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1549836-2cwmwzt.jpg",
+          "id": 1549836,
+          "caption": null,
+          "image_tags": "All Images"
+        },
+        {
+          "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1549804-9437_400x600.jpg",
+          "id": 1549804,
+          "caption": null,
+          "image_tags": "All Images"
+        }
+      ],
+      "issue_number": "1",
+      "name": "Absolute All Star Superman",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-all-star-superman-1-absolute-all-star-sup\/4000-248364\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-37318\/",
+        "id": 37318,
+        "name": "Absolute All Star Superman",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-all-star-superman\/4050-37318\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-424032\/",
+      "cover_date": "2013-08-31",
+      "date_added": "2013-08-28 22:12:29",
+      "date_last_updated": "2018-05-03 23:27:58",
+      "deck": null,
+      "description": "<p><em>Collecting the best-selling run of SUPERMAN\/BATMAN written by Jeph Loeb, with art by Ed McGuinness, Michael Turner and Pat Lee! The iconic Super Heroes unite when Lex Luthor, now president of the United States, accuses Superman of a crime against humanity, and assembles a top-secret team of powerhouse heroes to bring Superman in-dead or alive. And in the second story, prepare for the arrival of Supergirl! Batman has discovered something strange on the bottom of Gotham Bay, which leads him to a mysterious and powerful teenaged girl bent on destroying Gotham City! Collecting SUPERMAN\/BATMAN #1-13.<\/em><\/p>",
+      "has_staff_review": false,
+      "id": 424032,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/67663\/3276023-01.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/67663\/3276023-01.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/67663\/3276023-01.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/67663\/3276023-01.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/67663\/3276023-01.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/67663\/3276023-01.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/67663\/3276023-01.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/67663\/3276023-01.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/67663\/3276023-01.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [],
+      "issue_number": "1",
+      "name": "Volume 1",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-superman-batman-1-volume-1\/4000-424032\/",
+      "store_date": "2013-08-28",
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-66900\/",
+        "id": 66900,
+        "name": "Absolute Superman\/Batman",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-supermanbatman\/4050-66900\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-249871\/",
+      "cover_date": "2009-11-17",
+      "date_added": "2010-12-20 12:24:44",
+      "date_last_updated": "2011-11-14 10:01:16",
+      "deck": null,
+      "description": "<p><i>Overview:<br\/><br\/>The spectactular 12-issue series by Alex Ross, Jim Krueger and Doug Braithwaite is collected in this amazing, oversized, slipcased Absolute edition. The members of the Justice League of America are about to learn they aren't the only ones who can band together toward a common goal. The greatest criminal masterminds of our time appear to be acting in concert — but with a surprising plan that seeks to achieve more good than the JLA ever could!<br\/><br\/>This Absolute edition features a new cover by Ross, plus sketchbook a section with previously unseen artwork and more!<\/i><\/p>",
+      "has_staff_review": false,
+      "id": 249871,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/6\/62444\/1571636-11906_400x600.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/6\/62444\/1571636-11906_400x600.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/6\/62444\/1571636-11906_400x600.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/6\/62444\/1571636-11906_400x600.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/6\/62444\/1571636-11906_400x600.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/6\/62444\/1571636-11906_400x600.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/6\/62444\/1571636-11906_400x600.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/6\/62444\/1571636-11906_400x600.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1571636-11906_400x600.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [],
+      "issue_number": "1",
+      "name": "Absolute Justice",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-justice-1-absolute-justice\/4000-249871\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-37636\/",
+        "id": 37636,
+        "name": "Absolute Justice",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-justice\/4050-37636\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-183338\/",
+      "cover_date": "2008-10-31",
+      "date_added": "2009-11-14 22:40:00",
+      "date_last_updated": "2018-05-04 17:05:55",
+      "deck": null,
+      "description": "<p><i>RONIN, the acclaimed epic by Frank Miller, visionary writer\/artist of THE DARK KNIGHT RETURNS, 300 and Sin City and director of the upcoming movie adaptation of The Spirit, is collected for the first time in hardcover in DC's oversized, slipcased Absolute format! In this tale, the legendary warrior known only as the Ronin — a disgraced 13th century samurai, is given a second chance to avenge his master's death and regain his honor. Reborn in a futuristic and corrupt 21st century New York City, the Ronin must defeat the reincarnation of his master's killer, the ancient demon Agat.<\/i><\/p><p><i>This breathtaking Absolute Edition includes rarely seen promotional art, fold-out pages and more special features.<\/i><\/p>",
+      "has_staff_review": false,
+      "id": 183338,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/3\/38826\/1027563-ronin.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/3\/38826\/1027563-ronin.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/3\/38826\/1027563-ronin.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/3\/38826\/1027563-ronin.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/3\/38826\/1027563-ronin.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/3\/38826\/1027563-ronin.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/3\/38826\/1027563-ronin.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/3\/38826\/1027563-ronin.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/3\/38826\/1027563-ronin.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [],
+      "issue_number": "1",
+      "name": "Absolute Ronin",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-ronin-1-absolute-ronin\/4000-183338\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-29785\/",
+        "id": 29785,
+        "name": "Absolute Ronin",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-ronin\/4050-29785\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-218192\/",
+      "cover_date": "2009-09-01",
+      "date_added": "2010-06-08 10:59:13",
+      "date_last_updated": "2023-05-24 07:22:44",
+      "deck": null,
+      "description": "<p><i>Alan Moore's entrancing masterpiece is collected for the first time in oversized, Absolute format featuring the spectacular art of J.H. Williams III. The first of three ABSOLUTE PROMETHEA slipcased collections, this volume collects PROMETHEA #1-12! Discover the stories that introduced Sophie Bangs, an ordinary college student in a weirdly futuristic New York, whose life will be changed by her research into the mythical warrior woman known as Promethea!<\/i><\/p><p><i>Sophie Bangs was a just an ordinary college student in a weirdly futuristic New York when a simple assignment changed her life forever. While researching Promethea, a mythical warrior woman, Sophie receives a cryptic warning to cease her investigations. Ignoring the cautionary notice, she continues her studies and is almost killed by a shadowy creature when she learns the secret of Promethea. Surviving the encounter, Sophie soon finds herself transformed into Promethea, the living embodiment of the imagination. Her trials have only begun as she must master the secrets of her predecessors before she is destroyed by Promethea's ancient enemy.<\/i><\/p><p><i>Sophie Bangs, the latest in a long line of Prometheas, on a winding journey of discovery as she continues to learn the secrets of the Immateria...and herself. Her transcendental adventure brings young Sophie to realms of magic and wonder that none have experienced before.<\/i><\/p>",
+      "has_staff_review": false,
+      "id": 218192,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/0\/9116\/1328325-665309.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/0\/9116\/1328325-665309.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/0\/9116\/1328325-665309.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/0\/9116\/1328325-665309.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/0\/9116\/1328325-665309.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/0\/9116\/1328325-665309.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/0\/9116\/1328325-665309.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/0\/9116\/1328325-665309.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/0\/9116\/1328325-665309.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [
+        {
+          "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/6\/62444\/1489489-11532_400x600.jpg",
+          "id": 1489489,
+          "caption": null,
+          "image_tags": "All Images"
+        }
+      ],
+      "issue_number": "1",
+      "name": "Absolute Promethea Vol. 1",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-promethea-1-absolute-promethea-vol-1\/4000-218192\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-33609\/",
+        "id": 33609,
+        "name": "Absolute Promethea",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-promethea\/4050-33609\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-984609\/",
+      "cover_date": "2014-11-01",
+      "date_added": "2023-04-21 17:18:47",
+      "date_last_updated": "2023-04-21 17:21:49",
+      "deck": null,
+      "description": "<p>Digital comic tying in to the film Interstellar, featuring the character Dr. Mann (played by <a href=\"\/matt-damon\/4040-68742\/\" data-ref-id=\"4040-68742\">Matt Damon<\/a> in the film).<\/p>",
+      "has_staff_review": false,
+      "id": 984609,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11120\/111204803\/8914185-9751931680-unnam.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [],
+      "issue_number": "1",
+      "name": "Absolute Zero",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/interstellar-absolute-zero-1-absolute-zero\/4000-984609\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-149592\/",
+        "id": 149592,
+        "name": "Interstellar: Absolute Zero",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/interstellar-absolute-zero\/4050-149592\/"
+      },
+      "resource_type": "issue"
+    },
+    {
+      "aliases": null,
+      "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/issue\/4000-381622\/",
+      "cover_date": "2012-01-01",
+      "date_added": "2013-01-23 15:15:48",
+      "date_last_updated": "2016-02-26 14:21:45",
+      "deck": null,
+      "description": "<p><i>Presenting the classic tale of the Dark Knight from writer Jeph Loeb and artist Tim Sale for the first time in DC's upscale Absolute format!Collecting BATMAN: DARK VICTORY #0-13, this epic continues the story of THE LONG HALLOWEEN.<\/i><\/p>",
+      "has_staff_review": false,
+      "id": 381622,
+      "image": {
+        "icon_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_avatar\/14\/148518\/2828198-absdrkvictry.jpg",
+        "medium_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_medium\/14\/148518\/2828198-absdrkvictry.jpg",
+        "screen_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_medium\/14\/148518\/2828198-absdrkvictry.jpg",
+        "screen_large_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/screen_kubrick\/14\/148518\/2828198-absdrkvictry.jpg",
+        "small_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_small\/14\/148518\/2828198-absdrkvictry.jpg",
+        "super_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_large\/14\/148518\/2828198-absdrkvictry.jpg",
+        "thumb_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/scale_avatar\/14\/148518\/2828198-absdrkvictry.jpg",
+        "tiny_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/square_mini\/14\/148518\/2828198-absdrkvictry.jpg",
+        "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/14\/148518\/2828198-absdrkvictry.jpg",
+        "image_tags": "All Images"
+      },
+      "associated_images": [
+        {
+          "original_url": "https:\/\/comicvine.gamespot.com\/a\/uploads\/original\/11126\/111264167\/4925695-p00001.jpg",
+          "id": 4925695,
+          "caption": null,
+          "image_tags": "All Images"
+        }
+      ],
+      "issue_number": "1",
+      "name": "Absolute Edition",
+      "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-batman-dark-victory-1-absolute-edition\/4000-381622\/",
+      "store_date": null,
+      "volume": {
+        "api_detail_url": "https:\/\/comicvine.gamespot.com\/api\/volume\/4050-56169\/",
+        "id": 56169,
+        "name": "Absolute Batman: Dark Victory",
+        "site_detail_url": "https:\/\/comicvine.gamespot.com\/absolute-batman-dark-victory\/4050-56169\/"
+      },
+      "resource_type": "issue"
+    }
+  ],
+  "version": "1.0"
+}

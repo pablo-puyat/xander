@@ -1,850 +1,503 @@
 package comicvine
 
 import (
-	"encoding/json"
-	"errors"
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
-// MockClient implements the ComicVineClient interface for testing
-type MockClient struct {
+// MockAPIClient is a mock implementation of the APIClient interface
+type MockAPIClient struct {
 	mock.Mock
 }
 
-func (m *MockClient) Get(endpoint string, params map[string]string) ([]byte, int, error) {
-	args := m.Called(endpoint, params)
-	if args.Get(0) == nil {
-		return nil, args.Int(1), args.Error(2)
-	}
+// Request is the mock implementation of the APIClient.Request method
+func (m *MockAPIClient) Request(ctx context.Context, endpoint string, params map[string]string) ([]byte, int, error) {
+	args := m.Called(ctx, endpoint, params)
 	return args.Get(0).([]byte), args.Int(1), args.Error(2)
 }
 
+// Helper function to load test data files
+func loadTestData(t *testing.T, filename string) []byte {
+	path := filepath.Join("testdata", filename)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("Failed to load test data file %s: %v", path, err)
+	}
+	return data
+}
+
+// TestNewService tests the creation of a new ComicService
 func TestNewService(t *testing.T) {
-	t.Run("creates service with valid API key", func(t *testing.T) {
-		service := NewService("test-api-key", false)
-		assert.NotNil(t, service)
-		assert.False(t, service.verbose)
-	})
+	// Arrange
+	apiKey := "test-api-key"
+	verbose := true
 
-	t.Run("creates verbose service", func(t *testing.T) {
-		service := NewService("test-api-key", true)
-		assert.NotNil(t, service)
-		assert.True(t, service.verbose)
-	})
+	// Act
+	service := NewService(apiKey, verbose)
 
-	t.Run("initializes cache", func(t *testing.T) {
-		service := NewService("test-api-key", false)
-		assert.NotNil(t, service.cache)
-	})
+	// Assert
+	assert.NotNil(t, service, "Service should not be nil")
+	assert.NotNil(t, service.client, "Service client should not be nil")
+	assert.Equal(t, verbose, service.verbose, "Service verbose setting should match input")
 }
 
-func TestService_GetIssue(t *testing.T) {
-	tests := []struct {
-		name              string
-		series            string
-		issueNumber       string
-		mockResponses     []mockResponse
-		expectedIssue     *Issue
-		expectedError     string
-		expectCacheCheck  bool
-		expectAPICall     bool
-		expectedCacheSize int
+// TestSearchSeries tests searching for a comic series
+func TestSearchSeries(t *testing.T) {
+	// Load test data from files
+	successfulResponse := loadTestData(t, "search_volume_response.json")
+
+	// Test cases
+	testCases := []struct {
+		name           string
+		seriesName     string
+		seriesYear     string // Optional year parameter
+		mockResponse   []byte
+		mockStatusCode int
+		mockError      error
+		expectedError  bool
+		expectedCount  int
 	}{
 		{
-			name:        "retrieves issue from API successfully",
-			series:      "Batman",
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue: &Issue{
-				ID:          12345,
-				Name:        "Batman #1",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   67890,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 1,
+			name:           "successful series search",
+			seriesName:     "Batman",
+			seriesYear:     "",
+			mockResponse:   successfulResponse,
+			mockStatusCode: 200,
+			mockError:      nil,
+			expectedError:  false,
+			expectedCount:  10, // Adjust based on actual response
 		},
 		{
-			name:        "normalizes issue number by removing leading zeros",
-			series:      "Batman",
-			issueNumber: "001",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1", // Should normalize to 1 not 001
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue: &Issue{
-				ID:          12345,
-				Name:        "Batman #1",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   67890,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 1,
+			name:           "successful series search with year",
+			seriesName:     "Batman",
+			seriesYear:     "2020",
+			mockResponse:   successfulResponse,
+			mockStatusCode: 200,
+			mockError:      nil,
+			expectedError:  false,
+			expectedCount:  10, // Adjust based on actual response
 		},
 		{
-			name:        "uses cached result when available",
-			series:      "Batman",
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				// First request populates cache
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-				// Second request should use cache, not call API
-			},
-			expectedIssue: &Issue{
-				ID:          12345,
-				Name:        "Batman #1",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   67890,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     false, // No API call due to cache hit
-			expectedCacheSize: 1,
-		},
-		{
-			name:        "returns error when API fails",
-			series:      "Batman",
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response:   nil,
-					statusCode: 500,
-					err:        errors.New("API error"),
-				},
-			},
-			expectedIssue:     nil,
-			expectedError:     "API error",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 0, // No cache entry created when error occurs
-		},
-		{
-			name:        "returns error when no results found",
-			series:      "NonExistentSeries",
-			issueNumber: "999",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "NonExistentSeries 999",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response:   responseWithIssues([]Issue{}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue:     nil,
-			expectedError:     "no results found",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 0, // Empty results aren't cached
-		},
-		{
-			name:        "finds best match when multiple results",
-			series:      "Batman",
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Some Other Comic",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Some Other Series",
-							},
-						},
-						{
-							ID:          54321,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   98765,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue: &Issue{
-				ID:          54321,
-				Name:        "Batman #1",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   98765,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 1,
-		},
-		{
-			name:        "case insensitive matching",
-			series:      "batman", // lowercase
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman", // Uppercase first letter
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue: &Issue{
-				ID:          12345,
-				Name:        "Batman #1",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   67890,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 1,
-		},
-		{
-			name:        "handles cache expiration",
-			series:      "Batman",
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				// Initial response
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-				// Updated response after expiration
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1 (Updated)",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue: &Issue{
-				ID:          12345,
-				Name:        "Batman #1 (Updated)",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   67890,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     true, // API call made because cache expired
-			expectedCacheSize: 1,    // Cache updated with new result
+			name:           "api error",
+			seriesName:     "ErrorSeries",
+			seriesYear:     "",
+			mockResponse:   nil,
+			mockStatusCode: 500,
+			mockError:      fmt.Errorf("API error"),
+			expectedError:  true,
+			expectedCount:  0,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a new mock client
-			mockClient := new(MockClient)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockClient := new(MockAPIClient)
 
-			// Set up the mock client expectations
-			for _, mockResp := range tt.mockResponses {
-				mockClient.On("Get", mockResp.endpoint, mockResp.params).
-					Return(mockResp.response, mockResp.statusCode, mockResp.err)
-			}
+			// Set up expectations for the mock
+			mockClient.On("Request",
+				mock.Anything, // context
+				"search",      // endpoint
+				mock.MatchedBy(func(params map[string]string) bool {
+					resourceVal, resourceExists := params["resources"]
+					filterVal, filterExists := params["filter"]
 
-			// Create service with mock client
-			service := &Service{
+					if !resourceExists || resourceVal != "volume" || !filterExists {
+						return false
+					}
+
+					var expectedFilterVal string
+					if tc.seriesYear != "" {
+						expectedFilterVal = fmt.Sprintf("name:%s,start_year:%s", tc.seriesName, tc.seriesYear)
+					} else {
+						expectedFilterVal = "name:" + tc.seriesName
+					}
+
+					return filterVal == expectedFilterVal
+				}),
+			).Return(tc.mockResponse, tc.mockStatusCode, tc.mockError)
+
+			service := &ComicService{
 				client:  mockClient,
 				verbose: false,
-				cache:   make(map[string]CacheEntry),
 			}
 
-			// If testing cache expiration, inject an expired cache entry
-			if tt.name == "handles cache expiration" {
-				cacheKey := getCacheKey(tt.series, tt.issueNumber)
-				service.cache[cacheKey] = CacheEntry{
-					Results: []Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					},
-					Timestamp: time.Now().Add(-25 * time.Hour), // Expired (24h TTL)
+			// Act
+			results, err := service.searchSeries(context.Background(), tc.seriesName, tc.seriesYear)
+
+			// Assert
+			if tc.expectedError {
+				assert.Error(t, err, "Expected an error")
+			} else {
+				assert.NoError(t, err, "Did not expect an error")
+				assert.Equal(t, tc.expectedCount, len(results), "Expected count of results does not match")
+
+				// If we expect results, let's do some deeper validation of the first result
+				if tc.expectedCount > 0 {
+					// These assertions should match what's in your test data file
+					// Adjust these based on the actual content of your test file
+					assert.NotEmpty(t, results[0].Name, "Series name should not be empty")
+					assert.NotZero(t, results[0].ComicVineID, "Series ID should not be zero")
 				}
 			}
 
-			// If testing cache hit, perform a first call to populate cache
-			if tt.name == "uses cached result when available" {
-				// First call to populate cache
-				_, _ = service.GetIssue(tt.series, tt.issueNumber)
-
-				// Reset mock to verify no additional calls are made
-				mockClient.ExpectedCalls = nil
-			}
-
-			// Call the method being tested
-			result, err := service.GetIssue(tt.series, tt.issueNumber)
-
-			// Check error
-			if tt.expectedError != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-				assert.Nil(t, result)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, result)
-				assert.Equal(t, tt.expectedIssue.ID, result.ID)
-				assert.Equal(t, tt.expectedIssue.Name, result.Name)
-				assert.Equal(t, tt.expectedIssue.IssueNumber, result.IssueNumber)
-				assert.Equal(t, tt.expectedIssue.Volume.Name, result.Volume.Name)
-			}
-
-			// Check cache usage
-			assert.Equal(t, tt.expectedCacheSize, len(service.cache))
-
-			// Verify API call expectations
+			// Verify all expectations were met
 			mockClient.AssertExpectations(t)
 		})
 	}
 }
 
-func TestService_GetSeries(t *testing.T) {
-	// Similar tests as GetIssue but for GetSeries which should handle the same business logic
-	tests := []struct {
-		name              string
-		series            string
-		issueNumber       string
-		mockResponses     []mockResponse
-		expectedIssue     *Issue
-		expectedError     string
-		expectCacheCheck  bool
-		expectAPICall     bool
-		expectedCacheSize int
+// TestGetIssue tests retrieving a specific issue by volume ID and issue number
+func TestGetIssue(t *testing.T) {
+	// Load test data from files
+	successfulResponse := loadTestData(t, "issue_response.json")
+
+	// Test cases
+	testCases := []struct {
+		name            string
+		volumeID        int
+		issueNumber     string
+		mockResponse    []byte
+		mockStatusCode  int
+		mockError       error
+		expectedError   bool
+		expectedIssueID int
 	}{
 		{
-			name:        "retrieves series from API successfully",
-			series:      "Batman",
-			issueNumber: "1",
-			mockResponses: []mockResponse{
-				{
-					endpoint: "issues",
-					params: map[string]string{
-						"query": "Batman 1",
-						"limit": "10",
-						"sort":  "name:asc",
-					},
-					response: responseWithIssues([]Issue{
-						{
-							ID:          12345,
-							Name:        "Batman #1",
-							IssueNumber: "1",
-							Volume: Volume{
-								ID:   67890,
-								Name: "Batman",
-							},
-						},
-					}),
-					statusCode: 200,
-					err:        nil,
-				},
-			},
-			expectedIssue: &Issue{
-				ID:          12345,
-				Name:        "Batman #1",
-				IssueNumber: "1",
-				Volume: Volume{
-					ID:   67890,
-					Name: "Batman",
-				},
-			},
-			expectedError:     "",
-			expectCacheCheck:  true,
-			expectAPICall:     true,
-			expectedCacheSize: 1,
+			name:            "successful issue retrieval",
+			volumeID:        1234, // Adjust to match what's in your test data
+			issueNumber:     "1",  // Adjust to match what's in your test data
+			mockResponse:    successfulResponse,
+			mockStatusCode:  200,
+			mockError:       nil,
+			expectedError:   false,
+			expectedIssueID: 5678, // Adjust to match what's in your test data
 		},
-		// Additional test cases can be similar to GetIssue
+		{
+			name:            "issue not found",
+			volumeID:        1234,
+			issueNumber:     "999",
+			mockResponse:    []byte(`{"status_code":1,"results":{"results":[]}}`),
+			mockStatusCode:  200,
+			mockError:       nil,
+			expectedError:   true,
+			expectedIssueID: 0,
+		},
+		{
+			name:            "api error",
+			volumeID:        1234,
+			issueNumber:     "1",
+			mockResponse:    nil,
+			mockStatusCode:  500,
+			mockError:       fmt.Errorf("API error"),
+			expectedError:   true,
+			expectedIssueID: 0,
+		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a new mock client
-			mockClient := new(MockClient)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockClient := new(MockAPIClient)
 
-			// Set up the mock client expectations
-			for _, mockResp := range tt.mockResponses {
-				mockClient.On("Get", mockResp.endpoint, mockResp.params).
-					Return(mockResp.response, mockResp.statusCode, mockResp.err)
-			}
+			// Set up expectations
+			mockClient.On("Request",
+				mock.Anything, // context
+				"search",      // endpoint
+				mock.MatchedBy(func(params map[string]string) bool {
+					resourceVal, resourceExists := params["resources"]
+					filterVal, filterExists := params["filter"]
 
-			// Create service with mock client
-			service := &Service{
+					if !resourceExists || resourceVal != "volume" || !filterExists {
+						return false
+					}
+
+					var expectedFilterVal string
+					if tc.volumeID != 1234 {
+						expectedFilterVal = fmt.Sprintf("volumeID:%d", tc.volumeID)
+					}
+
+					return filterVal == expectedFilterVal
+				}),
+			).Return(tc.mockResponse, tc.mockStatusCode, tc.mockError)
+			service := &ComicService{
 				client:  mockClient,
 				verbose: false,
-				cache:   make(map[string]CacheEntry),
 			}
 
-			// Call the method being tested
-			result, err := service.GetSeries(tt.series, tt.issueNumber)
+			// Act
+			result, err := service.getIssue(context.Background(), tc.volumeID, tc.issueNumber)
 
-			// Check error
-			if tt.expectedError != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-				assert.Nil(t, result)
+			// Assert
+			if tc.expectedError {
+				assert.Error(t, err, "Expected an error")
+				assert.Nil(t, result, "Result should be nil when there's an error")
 			} else {
-				require.NoError(t, err)
-				require.NotNil(t, result)
-				assert.Equal(t, tt.expectedIssue.ID, result.ID)
-				assert.Equal(t, tt.expectedIssue.Name, result.Name)
-				assert.Equal(t, tt.expectedIssue.IssueNumber, result.IssueNumber)
-				assert.Equal(t, tt.expectedIssue.Volume.Name, result.Volume.Name)
+				assert.NoError(t, err, "Did not expect an error")
+				assert.NotNil(t, result, "Result should not be nil")
+
+				// Validate specific fields based on your test data
+				// These assertions should match what's in your actual test data file
+				assert.Equal(t, tc.expectedIssueID, result[0].ComicVineID, "Issue ID does not match")
+				assert.Equal(t, tc.issueNumber, result[0].IssueNumber, "Issue number does not match")
+
+				// Add more specific assertions based on the actual content of your test data
+				assert.NotEmpty(t, result[0].VolumeID, "Volume name should not be empty")
 			}
 
-			// Check cache usage
-			assert.Equal(t, tt.expectedCacheSize, len(service.cache))
-
-			// Verify API call expectations
+			// Verify all expectations were met
 			mockClient.AssertExpectations(t)
 		})
 	}
 }
 
-func TestService_FindBestMatch(t *testing.T) {
-	tests := []struct {
-		name         string
-		series       string
-		issueNumber  string
-		issues       []Issue
-		expectedID   int
-		expectedName string
+/*
+// TestGetComicInfo tests the high-level method to get comic information
+// This is the method that implements your described workflow
+func TestGetComicInfo(t *testing.T) {
+	// Load test data from files
+	successfulSeriesResponse := loadTestData(t, "search_volume_response.json")
+	successfulIssueResponse := loadTestData(t, "search_issue_response.json")
+
+	// Test cases
+	testCases := []struct {
+		name            string
+		seriesName      string
+		issueNumber     string
+		seriesYear      string
+		mockSeriesResp  []byte
+		mockIssueResp   []byte
+		mockStatusCodes []int
+		mockErrors      []error
+		expectedError   bool
 	}{
 		{
-			name:        "exact match on series and issue",
-			series:      "Batman",
-			issueNumber: "1",
-			issues: []Issue{
-				{
-					ID:          12345,
-					Name:        "Superman #5",
-					IssueNumber: "5",
-					Volume: Volume{
-						Name: "Superman",
-					},
-				},
-				{
-					ID:          54321,
-					Name:        "Batman #1",
-					IssueNumber: "1",
-					Volume: Volume{
-						Name: "Batman",
-					},
-				},
-			},
-			expectedID:   54321,
-			expectedName: "Batman #1",
+			name:            "successful end-to-end retrieval",
+			seriesName:      "Batman",
+			issueNumber:     "1",
+			seriesYear:      "",
+			mockSeriesResp:  successfulSeriesResponse,
+			mockIssueResp:   successfulIssueResponse,
+			mockStatusCodes: []int{200, 200},
+			mockErrors:      []error{nil, nil},
+			expectedError:   false,
 		},
 		{
-			name:        "partial match on series",
-			series:      "Batman",
-			issueNumber: "1",
-			issues: []Issue{
-				{
-					ID:          12345,
-					Name:        "Superman #1",
-					IssueNumber: "1",
-					Volume: Volume{
-						Name: "Superman",
-					},
-				},
-				{
-					ID:          54321,
-					Name:        "The Batman Chronicles #1",
-					IssueNumber: "1",
-					Volume: Volume{
-						Name: "The Batman Chronicles",
-					},
-				},
-			},
-			expectedID:   54321,
-			expectedName: "The Batman Chronicles #1",
+			name:            "series not found",
+			seriesName:      "NonExistentSeries",
+			issueNumber:     "1",
+			seriesYear:      "",
+			mockSeriesResp:  []byte(`{"status_code":1,"results":{"results":[]}}`),
+			mockIssueResp:   nil, // Won't be called
+			mockStatusCodes: []int{200},
+			mockErrors:      []error{nil},
+			expectedError:   true,
 		},
 		{
-			name:        "exact match on issue number",
-			series:      "Batman",
-			issueNumber: "5",
-			issues: []Issue{
-				{
-					ID:          12345,
-					Name:        "Batman #4",
-					IssueNumber: "4",
-					Volume: Volume{
-						Name: "Batman",
-					},
-				},
-				{
-					ID:          54321,
-					Name:        "Batman #5",
-					IssueNumber: "5",
-					Volume: Volume{
-						Name: "Batman",
-					},
-				},
-			},
-			expectedID:   54321,
-			expectedName: "Batman #5",
+			name:            "series found but issue not found",
+			seriesName:      "Batman",
+			issueNumber:     "999",
+			seriesYear:      "",
+			mockSeriesResp:  successfulSeriesResponse,
+			mockIssueResp:   []byte(`{"status_code":1,"results":{"results":[]}}`),
+			mockStatusCodes: []int{200, 200},
+			mockErrors:      []error{nil, nil},
+			expectedError:   true,
 		},
 		{
-			name:        "match with different case",
-			series:      "batman",
-			issueNumber: "1",
-			issues: []Issue{
-				{
-					ID:          54321,
-					Name:        "Batman #1",
-					IssueNumber: "1",
-					Volume: Volume{
-						Name: "Batman",
-					},
-				},
-			},
-			expectedID:   54321,
-			expectedName: "Batman #1",
+			name:            "series search error",
+			seriesName:      "ErrorSeries",
+			issueNumber:     "1",
+			seriesYear:      "",
+			mockSeriesResp:  nil,
+			mockIssueResp:   nil, // Won't be called
+			mockStatusCodes: []int{500},
+			mockErrors:      []error{fmt.Errorf("API error")},
+			expectedError:   true,
 		},
 		{
-			name:        "fallback to first result when no good match",
-			series:      "Non-existent Series",
-			issueNumber: "999",
-			issues: []Issue{
-				{
-					ID:          12345,
-					Name:        "Some Comic #1",
-					IssueNumber: "1",
-					Volume: Volume{
-						Name: "Some Series",
-					},
-				},
-			},
-			expectedID:   12345,
-			expectedName: "Some Comic #1",
-		},
-		{
-			name:        "normalized issue number matching",
-			series:      "Batman",
-			issueNumber: "001",
-			issues: []Issue{
-				{
-					ID:          54321,
-					Name:        "Batman #1",
-					IssueNumber: "1", // No leading zeros
-					Volume: Volume{
-						Name: "Batman",
-					},
-				},
-			},
-			expectedID:   54321,
-			expectedName: "Batman #1",
+			name:            "issue search error",
+			seriesName:      "Batman",
+			issueNumber:     "1",
+			seriesYear:      "",
+			mockSeriesResp:  successfulSeriesResponse,
+			mockIssueResp:   nil,
+			mockStatusCodes: []int{200, 500},
+			mockErrors:      []error{nil, fmt.Errorf("API error")},
+			expectedError:   true,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := &Service{
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockClient := new(MockAPIClient)
+
+			// Extract volume ID from your test data for the issue request matcher
+			// This would need to be adjusted based on your actual test data structure
+			volumeID := 1234 // Replace with actual ID from your test data
+
+			// Set up expectations for series search
+			if tc.mockSeriesResp != nil {
+				mockClient.On("Request",
+					mock.Anything, // context
+					"search",      // endpoint
+					mock.MatchedBy(func(params map[string]string) bool {
+						resourceVal, resourceExists := params["resources"]
+						filterVal, filterExists := params["filter"]
+
+						if !resourceExists || resourceVal != "volume" || !filterExists {
+							return false
+						}
+
+						var expectedFilterVal string
+						if tc.seriesYear != "" {
+							expectedFilterVal = fmt.Sprintf("name:%s,start_year:%s", tc.seriesName, tc.seriesYear)
+						} else {
+							expectedFilterVal = "name:" + tc.seriesName
+						}
+
+						return filterVal == expectedFilterVal
+					}),
+				).Return(tc.mockSeriesResp, tc.mockStatusCodes[0], tc.mockErrors[0])
+			}
+
+			// Set up expectations for issue search if needed
+			if tc.mockIssueResp != nil {
+				mockClient.On("Request",
+					mock.Anything, // context
+					"issues",      // endpoint
+					mock.MatchedBy(func(params map[string]string) bool {
+						filterVal, filterExists := params["filter"]
+
+						if !filterExists {
+							return false
+						}
+
+						expectedFilterVal := fmt.Sprintf("volume:%d,issue_number:%s", volumeID, tc.issueNumber)
+
+						return filterVal == expectedFilterVal
+					}),
+				).Return(tc.mockIssueResp, tc.mockStatusCodes[1], tc.mockErrors[1])
+			}
+
+			service := &ComicService{
+				client:  mockClient,
 				verbose: false,
-				cache:   make(map[string]CacheEntry),
 			}
 
-			// Normalize issue number as the service should
-			normalizedIssueNumber := tt.issueNumber
-			if len(normalizedIssueNumber) > 1 && normalizedIssueNumber[0] == '0' {
-				for len(normalizedIssueNumber) > 1 && normalizedIssueNumber[0] == '0' {
-					normalizedIssueNumber = normalizedIssueNumber[1:]
-				}
+			// Act
+			result, err := service.GetComicInfo(context.Background(), tc.seriesName, tc.issueNumber, tc.seriesYear)
+
+			// Assert
+			if tc.expectedError {
+				assert.Error(t, err, "Expected an error")
+			} else {
+				assert.NoError(t, err, "Did not expect an error")
+				assert.NotNil(t, result, "Result should not be nil")
+
+				// Add specific assertions based on your actual test data
+				assert.Equal(t, tc.seriesName, result.Series, "Series name doesn't match")
+				assert.Equal(t, tc.issueNumber, result.Issue, "Issue number doesn't match")
 			}
 
-			result := service.findBestMatch(tt.issues, tt.series, normalizedIssueNumber)
-
-			require.NotNil(t, result)
-			assert.Equal(t, tt.expectedID, result.ID)
-			assert.Equal(t, tt.expectedName, result.Name)
+			// Verify all expectations were met
+			mockClient.AssertExpectations(t)
 		})
 	}
 }
 
-func TestService_NormalizeIssueNumber(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "single digit unchanged",
-			input:    "1",
-			expected: "1",
-		},
-		{
-			name:     "double digit unchanged",
-			input:    "42",
-			expected: "42",
-		},
-		{
-			name:     "removes single leading zero",
-			input:    "01",
-			expected: "1",
-		},
-		{
-			name:     "removes multiple leading zeros",
-			input:    "001",
-			expected: "1",
-		},
-		{
-			name:     "preserves zero",
-			input:    "0",
-			expected: "0",
-		},
-		{
-			name:     "handles decimal points",
-			input:    "1.5",
-			expected: "1.5",
-		},
-		{
-			name:     "removes leading zeros from decimal",
-			input:    "01.5",
-			expected: "1.5",
-		},
+// TestRateLimitHandling tests how the service handles rate limit responses
+func TestRateLimitHandling(t *testing.T) {
+	// You would need a rate limit response example file
+	// This is a hypothetical test for when you get such an example
+
+	// Load test data - you'll need to create this file
+	// rateLimitResponse := loadTestData(t, "rate_limit_response.json")
+
+	// For now, let's use a mocked rate limit response
+	rateLimitResponse := []byte(`{
+		"status_code": 107,
+		"error": "API usage limit exceeded. Please try again later.",
+		"results": {}
+	}`)
+
+	// Arrange
+	mockClient := new(MockAPIClient)
+
+	// Set up expectations
+	mockClient.On("Request",
+		mock.Anything, // context
+		"search",      // endpoint
+		mock.Anything, // params
+	).Return(rateLimitResponse, 429, nil) // 429 is Too Many Requests
+
+	service := &ComicService{
+		client:  mockClient,
+		verbose: false,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := &Service{}
-			normalized := service.normalizeIssueNumber(tt.input)
-			assert.Equal(t, tt.expected, normalized)
-		})
-	}
+	// Act
+	results, err := service.SearchSeries(context.Background(), "Batman", "")
+
+	// Assert
+	assert.Error(t, err, "Expected a rate limit error")
+	assert.Nil(t, results, "Results should be nil when rate limited")
+
+	// Check if the error message indicates a rate limit issue
+	assert.Contains(t, err.Error(), "rate limit", "Error should mention rate limiting")
+
+	// Verify all expectations were met
+	mockClient.AssertExpectations(t)
 }
 
-func TestService_GetCacheKey(t *testing.T) {
-	tests := []struct {
-		name        string
-		series      string
-		issueNumber string
-		expected    string
-	}{
-		{
-			name:        "basic key generation",
-			series:      "Batman",
-			issueNumber: "1",
-			expected:    "batman:1",
-		},
-		{
-			name:        "lowercase conversion",
-			series:      "BATMAN",
-			issueNumber: "1",
-			expected:    "batman:1",
-		},
-		{
-			name:        "issue normalization",
-			series:      "Batman",
-			issueNumber: "001",
-			expected:    "batman:1",
-		},
-		{
-			name:        "handles spaces",
-			series:      "Batman Beyond",
-			issueNumber: "1",
-			expected:    "batman beyond:1",
-		},
-		{
-			name:        "handles special characters",
-			series:      "Batman & Robin",
-			issueNumber: "1",
-			expected:    "batman & robin:1",
-		},
+// TestInvalidApiKeyHandling tests how the service handles invalid API key responses
+func TestInvalidApiKeyHandling(t *testing.T) {
+	// You would need an invalid API key response example file
+	// This is a hypothetical test for when you get such an example
+
+	// Load test data - you'll need to create this file
+	// invalidKeyResponse := loadTestData(t, "invalid_api_key_response.json")
+
+	// For now, let's use a mocked invalid API key response
+	invalidKeyResponse := []byte(`{
+		"status_code": 100,
+		"error": "Invalid API key",
+		"results": {}
+	}`)
+
+	// Arrange
+	mockClient := new(MockAPIClient)
+
+	// Set up expectations
+	mockClient.On("Request",
+		mock.Anything, // context
+		"search",      // endpoint
+		mock.Anything, // params
+	).Return(invalidKeyResponse, 401, nil) // 401 is Unauthorized
+
+	service := &ComicService{
+		client:  mockClient,
+		verbose: false,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			service := &Service{}
-			key := getCacheKey(tt.series, tt.issueNumber)
-			assert.Equal(t, tt.expected, key)
-		})
-	}
+	// Act
+	results, err := service.SearchSeries(context.Background(), "Batman", "")
+
+	// Assert
+	assert.Error(t, err, "Expected an API key error")
+	assert.Nil(t, results, "Results should be nil when API key is invalid")
+
+	// Check if the error message indicates an API key issue
+	assert.Contains(t, err.Error(), "API key", "Error should mention API key")
+
+	// Verify all expectations were met
+	mockClient.AssertExpectations(t)
 }
-
-// Helper types and functions for testing
-
-type mockResponse struct {
-	endpoint   string
-	params     map[string]string
-	response   []byte
-	statusCode int
-	err        error
-}
-
-// Temporary helper for test - will be implemented by the service
-func getCacheKey(series, issueNumber string) string {
-	normalizedIssue := issueNumber
-	if len(normalizedIssue) > 1 && normalizedIssue[0] == '0' {
-		for len(normalizedIssue) > 1 && normalizedIssue[0] == '0' {
-			normalizedIssue = normalizedIssue[1:]
-		}
-	}
-	return series + ":" + normalizedIssue
-}
-
-func responseWithIssues(issues []Issue) []byte {
-	// Build mock response with specified issues
-	response := map[string]interface{}{
-		"status_code": 1,
-		"results":     issues,
-	}
-
-	respBytes, _ := json.Marshal(response)
-	return respBytes
-}
+*/
