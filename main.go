@@ -18,13 +18,14 @@ import (
 	"comic-parser/config"
 	"comic-parser/models"
 	"comic-parser/processor"
+	"comic-parser/storage"
 )
 
 func main() {
 	// Define flags
 	inputFile := flag.String("input", "", "Input file containing filenames (one per line)")
 	outputFile := flag.String("output", "results.json", "Output file for results")
-	outputFormat := flag.String("format", "json", "Output format: json or csv")
+	outputFormat := flag.String("format", "json", "Output format: json, csv, or sqlite")
 	configFile := flag.String("config", "config.json", "Path to configuration file")
 	workers := flag.Int("workers", 3, "Number of concurrent workers")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
@@ -246,9 +247,27 @@ func saveResults(results []*models.ProcessingResult, path string, format string)
 		return saveJSON(results, path)
 	case "csv":
 		return saveCSV(results, path)
+	case "sqlite", "db":
+		return saveDB(results, path)
 	default:
 		return fmt.Errorf("unknown output format: %s", format)
 	}
+}
+
+func saveDB(results []*models.ProcessingResult, path string) error {
+	store, err := storage.NewStorage(path)
+	if err != nil {
+		return err
+	}
+	defer store.Close()
+
+	ctx := context.Background()
+	for _, result := range results {
+		if err := store.SaveResult(ctx, result); err != nil {
+			return fmt.Errorf("failed to save result for %s: %w", result.Filename, err)
+		}
+	}
+	return nil
 }
 
 func saveJSON(results []*models.ProcessingResult, path string) error {
