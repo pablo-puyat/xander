@@ -29,6 +29,7 @@ func main() {
 	configFile := flag.String("config", "config.json", "Path to configuration file")
 	workers := flag.Int("workers", 3, "Number of concurrent workers")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
+	interactive := flag.Bool("interactive", false, "Enable interactive TUI mode")
 	singleFile := flag.String("file", "", "Process a single filename (for testing)")
 	generateConfig := flag.Bool("generate-config", false, "Generate a sample config file")
 
@@ -64,6 +65,7 @@ func main() {
 		cfg.OutputFormat = *outputFormat
 	}
 	cfg.Verbose = *verbose
+	cfg.Interactive = *interactive
 
 	// Validate configuration
 	if err := cfg.Validate(); err != nil {

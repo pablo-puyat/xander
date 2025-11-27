@@ -8,6 +8,7 @@ import (
 
 	"comic-parser/config"
 	"comic-parser/models"
+	"comic-parser/selector"
 )
 
 // MockLLMClient
@@ -49,6 +50,7 @@ func TestProcessFile(t *testing.T) {
 		llmClient: mockLLM,
 		cvClient:  mockCV,
 		verbose:   true,
+		selector:  selector.NewLLMSelector(mockLLM, cfg),
 	}
 
 	// Mock LLM responses
@@ -116,6 +118,7 @@ func TestProcessFile_ParseError(t *testing.T) {
 		cfg:       cfg,
 		llmClient: mockLLM,
 		cvClient:  mockCV,
+		selector:  selector.NewLLMSelector(mockLLM, cfg),
 	}
 
 	mockLLM.CompleteWithRetryFunc = func(ctx context.Context, prompt string, maxRetries int, delay time.Duration) (string, error) {
