@@ -10,7 +10,7 @@ import (
 
 const (
 	// Default API configuration
-	defaultAnthropicModel      = "claude-sonnet-4-20250514"
+	defaultAnthropicModel      = "claude-3-5-sonnet-20240620"
 	defaultAnthropicMaxTokens  = 1024
 	defaultAnthropicAPIBaseURL = "https://api.anthropic.com/v1"
 	defaultComicVineAPIBaseURL = "https://comicvine.gamespot.com/api"
@@ -48,11 +48,11 @@ type Config struct {
 	ComicVineAPIBaseURL string `json:"comicvine_api_base_url"`
 
 	// Processing settings
-	WorkerCount       int  `json:"worker_count"`
-	RateLimitPerMin   int  `json:"rate_limit_per_min"`
-	RetryAttempts     int  `json:"retry_attempts"`
-	RetryDelaySeconds int  `json:"retry_delay_seconds"`
-	CacheEnabled      bool `json:"cache_enabled"`
+	WorkerCount       int    `json:"worker_count"`
+	RateLimitPerMin   int    `json:"rate_limit_per_min"`
+	RetryAttempts     int    `json:"retry_attempts"`
+	RetryDelaySeconds int    `json:"retry_delay_seconds"`
+	CacheEnabled      bool   `json:"cache_enabled"`
 	CacheDir          string `json:"cache_dir"`
 
 	// Output settings

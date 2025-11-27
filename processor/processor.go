@@ -17,13 +17,25 @@ import (
 	"comic-parser/prompts"
 )
 
+// LLMClient defines the interface for LLM interactions.
+type LLMClient interface {
+	CompleteWithRetry(ctx context.Context, prompt string, maxRetries int, delay time.Duration) (string, error)
+	Close()
+}
+
+// CVClient defines the interface for ComicVine interactions.
+type CVClient interface {
+	SearchIssues(ctx context.Context, title string, issueNumber string) ([]models.ComicVineIssue, error)
+	Close()
+}
+
 // Processor orchestrates the comic parsing and matching workflow.
 type Processor struct {
-	cfg         *config.Config
-	llmClient   *llm.Client
-	cvClient    *comicvine.Client
-	verbose     bool
-	
+	cfg       *config.Config
+	llmClient LLMClient
+	cvClient  CVClient
+	verbose   bool
+
 	// Progress tracking
 	progressMu sync.Mutex
 	progress   models.BatchProgress
@@ -41,7 +53,12 @@ func NewProcessor(cfg *config.Config) *Processor {
 
 // Close cleans up processor resources.
 func (p *Processor) Close() {
-	p.cvClient.Close()
+	if p.cvClient != nil {
+		p.cvClient.Close()
+	}
+	if p.llmClient != nil {
+		p.llmClient.Close()
+	}
 }
 
 // ProcessFile processes a single comic filename.
@@ -137,7 +154,7 @@ func (p *Processor) ProcessBatch(ctx context.Context, filenames []string, result
 				}
 
 				result, _ := p.ProcessFile(ctx, filename)
-				
+
 				p.progressMu.Lock()
 				p.progress.Processed++
 				if result.Success {

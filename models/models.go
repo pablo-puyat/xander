@@ -95,12 +95,12 @@ type MatchResult struct {
 
 // ProcessingResult is the final output for each file
 type ProcessingResult struct {
-	Filename        string       `json:"filename"`
-	Success         bool         `json:"success"`
-	Error           string       `json:"error,omitempty"`
-	Match           *MatchResult `json:"match,omitempty"`
-	ProcessedAt     time.Time    `json:"processed_at"`
-	ProcessingTimeMS int64       `json:"processing_time_ms"`
+	Filename         string       `json:"filename"`
+	Success          bool         `json:"success"`
+	Error            string       `json:"error,omitempty"`
+	Match            *MatchResult `json:"match,omitempty"`
+	ProcessedAt      time.Time    `json:"processed_at"`
+	ProcessingTimeMS int64        `json:"processing_time_ms"`
 }
 
 // BatchProgress tracks progress of batch processing
