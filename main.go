@@ -175,7 +175,7 @@ func processBatch(ctx context.Context, proc *processor.Processor, cfg *config.Co
 	go func() {
 		for result := range resultChan {
 			results = append(results, result)
-			
+
 			// Print progress
 			progress := proc.GetProgress()
 			fmt.Printf("\rProgress: %d/%d (✓ %d, ✗ %d)",

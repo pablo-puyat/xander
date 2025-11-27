@@ -19,21 +19,21 @@ import (
 
 const (
 	// API parameters
-	paramAPIKey      = "api_key"
-	paramFormat      = "format"
-	paramResources   = "resources"
-	paramQuery       = "query"
-	paramLimit       = "limit"
-	paramFieldList   = "field_list"
-	paramFilter      = "filter"
-	formatJSON       = "json"
-	userAgentValue   = "ComicParser/1.0"
-	headerUserAgent  = "User-Agent"
+	paramAPIKey     = "api_key"
+	paramFormat     = "format"
+	paramResources  = "resources"
+	paramQuery      = "query"
+	paramLimit      = "limit"
+	paramFieldList  = "field_list"
+	paramFilter     = "filter"
+	formatJSON      = "json"
+	userAgentValue  = "ComicParser/1.0"
+	headerUserAgent = "User-Agent"
 
 	// Search limits
-	maxVolumesToCheck = 5
+	maxVolumesToCheck  = 5
 	defaultSearchLimit = 10
-	defaultIssueLimit = 100
+	defaultIssueLimit  = 100
 
 	// Volume ID format prefix
 	volumeIDPrefix = "4050-"
@@ -52,18 +52,17 @@ type Client struct {
 	rateLimiter *time.Ticker
 	rateMutex   sync.Mutex
 
-	// Volume cache to reduce API calls
+	// Caches to reduce API calls
 	volumeCache map[int]*models.ComicVineVolume
+	searchCache map[string][]models.ComicVineVolume
 	cacheMutex  sync.RWMutex
 }
 
 // NewClient creates a new ComicVine API client.
 func NewClient(cfg *config.Config) *Client {
-	// ComicVine has a rate limit, default to ~1 request per second
-	ratePerSecond := cfg.RateLimitPerMin / 60
-	if ratePerSecond < 1 {
-		ratePerSecond = 1
-	}
+	// ComicVine has a rate limit, fixed at ~1 request per second
+	// We use 1.2 seconds to be safe and conservative
+	rateInterval := 1200 * time.Millisecond
 
 	return &Client{
 		apiKey:  cfg.ComicVineAPIKey,
@@ -71,17 +70,28 @@ func NewClient(cfg *config.Config) *Client {
 		httpClient: &http.Client{
 			Timeout: defaultHTTPTimeout,
 		},
-		rateLimiter: time.NewTicker(time.Second / time.Duration(ratePerSecond)),
+		rateLimiter: time.NewTicker(rateInterval),
 		volumeCache: make(map[int]*models.ComicVineVolume),
+		searchCache: make(map[string][]models.ComicVineVolume),
+	}
+}
+
+// waitRateLimit waits for the rate limiter to allow a request
+func (c *Client) waitRateLimit(ctx context.Context) error {
+	c.rateMutex.Lock()
+	defer c.rateMutex.Unlock()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-c.rateLimiter.C:
+		return nil
 	}
 }
 
 // SearchIssues searches for comic issues by title and optional issue number
 func (c *Client) SearchIssues(ctx context.Context, title string, issueNumber string) ([]models.ComicVineIssue, error) {
-	// Respect rate limit
-	c.rateMutex.Lock()
-	<-c.rateLimiter.C
-	c.rateMutex.Unlock()
+	// Wait for rate limit happens inside sub-calls
 
 	// Build search query
 	// ComicVine's search is best when searching for volumes first
@@ -159,10 +169,18 @@ func (c *Client) searchByVolumeAndIssue(ctx context.Context, title string, issue
 
 // searchVolumes searches for volumes (comic series) by name
 func (c *Client) searchVolumes(ctx context.Context, name string) ([]models.ComicVineVolume, error) {
+	// Check cache first
+	c.cacheMutex.RLock()
+	if results, ok := c.searchCache[name]; ok {
+		c.cacheMutex.RUnlock()
+		return results, nil
+	}
+	c.cacheMutex.RUnlock()
+
 	// Respect rate limit
-	c.rateMutex.Lock()
-	<-c.rateLimiter.C
-	c.rateMutex.Unlock()
+	if err := c.waitRateLimit(ctx); err != nil {
+		return nil, err
+	}
 
 	params := url.Values{}
 	params.Set(paramAPIKey, c.apiKey)
@@ -204,15 +222,20 @@ func (c *Client) searchVolumes(ctx context.Context, name string) ([]models.Comic
 		return nil, fmt.Errorf("parsing response: %w", err)
 	}
 
+	// Cache the result
+	c.cacheMutex.Lock()
+	c.searchCache[name] = result.Results
+	c.cacheMutex.Unlock()
+
 	return result.Results, nil
 }
 
 // getIssuesForVolume gets issues for a specific volume, optionally filtered by issue number
 func (c *Client) getIssuesForVolume(ctx context.Context, volumeID int, issueNumber string) ([]models.ComicVineIssue, error) {
 	// Respect rate limit
-	c.rateMutex.Lock()
-	<-c.rateLimiter.C
-	c.rateMutex.Unlock()
+	if err := c.waitRateLimit(ctx); err != nil {
+		return nil, err
+	}
 
 	params := url.Values{}
 	params.Set(paramAPIKey, c.apiKey)
@@ -264,9 +287,9 @@ func (c *Client) getIssuesForVolume(ctx context.Context, volumeID int, issueNumb
 // searchIssuesDirectly searches issues directly (fallback method)
 func (c *Client) searchIssuesDirectly(ctx context.Context, title string, issueNumber string) ([]models.ComicVineIssue, error) {
 	// Respect rate limit
-	c.rateMutex.Lock()
-	<-c.rateLimiter.C
-	c.rateMutex.Unlock()
+	if err := c.waitRateLimit(ctx); err != nil {
+		return nil, err
+	}
 
 	// Build search query
 	query := title
@@ -325,9 +348,9 @@ func (c *Client) getVolume(ctx context.Context, volumeID int) (*models.ComicVine
 	c.cacheMutex.RUnlock()
 
 	// Respect rate limit
-	c.rateMutex.Lock()
-	<-c.rateLimiter.C
-	c.rateMutex.Unlock()
+	if err := c.waitRateLimit(ctx); err != nil {
+		return nil, err
+	}
 
 	params := url.Values{}
 	params.Set(paramAPIKey, c.apiKey)

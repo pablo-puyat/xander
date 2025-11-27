@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -28,11 +29,12 @@ const (
 
 // Client is an Anthropic API client.
 type Client struct {
-	apiKey     string
-	baseURL    string
-	model      string
-	maxTokens  int
-	httpClient *http.Client
+	apiKey      string
+	baseURL     string
+	model       string
+	maxTokens   int
+	httpClient  *http.Client
+	rateLimiter *time.Ticker
 }
 
 // Message represents a message in the conversation
@@ -83,6 +85,13 @@ type ErrorResponse struct {
 
 // NewClient creates a new Anthropic API client.
 func NewClient(cfg *config.Config) *Client {
+	// Calculate rate limit interval
+	limit := cfg.RateLimitPerMin
+	if limit <= 0 {
+		limit = 30 // Safe default
+	}
+	interval := time.Minute / time.Duration(limit)
+
 	return &Client{
 		apiKey:    cfg.AnthropicAPIKey,
 		baseURL:   cfg.AnthropicAPIBaseURL,
@@ -91,11 +100,29 @@ func NewClient(cfg *config.Config) *Client {
 		httpClient: &http.Client{
 			Timeout: defaultHTTPTimeout,
 		},
+		rateLimiter: time.NewTicker(interval),
+	}
+}
+
+// Close cleans up client resources.
+func (c *Client) Close() {
+	if c.rateLimiter != nil {
+		c.rateLimiter.Stop()
 	}
 }
 
 // Complete sends a completion request to the Anthropic API
 func (c *Client) Complete(ctx context.Context, prompt string) (string, error) {
+	// Respect rate limit
+	if c.rateLimiter != nil {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-c.rateLimiter.C:
+			// Proceed
+		}
+	}
+
 	req := Request{
 		Model:     c.model,
 		MaxTokens: c.maxTokens,
@@ -112,10 +139,13 @@ func (c *Client) CompleteWithRetry(ctx context.Context, prompt string, maxRetrie
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		if attempt > 0 {
+			// Exponential backoff: delay * 2^(attempt-1)
+			backoff := delay * time.Duration(math.Pow(2, float64(attempt-1)))
+
 			select {
 			case <-ctx.Done():
 				return "", ctx.Err()
-			case <-time.After(delay * time.Duration(attempt)): // Exponential backoff
+			case <-time.After(backoff):
 			}
 		}
 
@@ -192,7 +222,7 @@ func (c *Client) doRequest(ctx context.Context, req Request) (string, error) {
 }
 
 // ExtractJSON extracts JSON from LLM response that might have extra text.
-// It handles markdown code blocks and finds valid JSON object boundaries.
+// It handles markdown code blocks and finds valid JSON object boundaries using json.Decoder.
 func ExtractJSON(response string) string {
 	// Try to find JSON object boundaries
 	response = strings.TrimSpace(response)
@@ -212,25 +242,19 @@ func ExtractJSON(response string) string {
 
 	response = strings.TrimSpace(response)
 
-	// Find the JSON object
+	// Find the JSON object start
 	start := strings.Index(response, "{")
 	if start == -1 {
 		return response
 	}
 
-	// Find matching closing brace
-	depth := 0
-	for i := start; i < len(response); i++ {
-		switch response[i] {
-		case '{':
-			depth++
-		case '}':
-			depth--
-			if depth == 0 {
-				return response[start : i+1]
-			}
-		}
+	// Use json.Decoder to find the end of the object intelligently
+	decoder := json.NewDecoder(strings.NewReader(response[start:]))
+	var v json.RawMessage
+	if err := decoder.Decode(&v); err != nil {
+		// If decoding fails, fall back to returning everything from start
+		return response[start:]
 	}
 
-	return response[start:]
+	return string(v)
 }
