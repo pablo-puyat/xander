@@ -59,6 +59,7 @@ type Config struct {
 	OutputFile   string `json:"output_file"`
 	OutputFormat string `json:"output_format"` // json, csv
 	Verbose      bool   `json:"verbose"`
+	Interactive  bool   `json:"interactive"`
 }
 
 // DefaultConfig returns a configuration with sensible defaults.
@@ -77,6 +78,7 @@ func DefaultConfig() *Config {
 		OutputFile:          defaultOutputFile,
 		OutputFormat:        defaultOutputFormat,
 		Verbose:             false,
+		Interactive:         false,
 	}
 }
 

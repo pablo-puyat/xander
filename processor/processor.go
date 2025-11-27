@@ -15,6 +15,7 @@ import (
 	"comic-parser/llm"
 	"comic-parser/models"
 	"comic-parser/prompts"
+	"comic-parser/selector"
 )
 
 // LLMClient defines the interface for LLM interactions.
@@ -34,6 +35,7 @@ type Processor struct {
 	cfg       *config.Config
 	llmClient LLMClient
 	cvClient  CVClient
+	selector  selector.Selector
 	verbose   bool
 
 	// Progress tracking
@@ -43,10 +45,20 @@ type Processor struct {
 
 // NewProcessor creates a new processor.
 func NewProcessor(cfg *config.Config) *Processor {
+	llmClient := llm.NewClient(cfg)
+
+	var sel selector.Selector
+	if cfg.Interactive {
+		sel = selector.NewTUISelector()
+	} else {
+		sel = selector.NewLLMSelector(llmClient, cfg)
+	}
+
 	return &Processor{
 		cfg:       cfg,
-		llmClient: llm.NewClient(cfg),
+		llmClient: llmClient,
 		cvClient:  comicvine.NewClient(cfg),
+		selector:  sel,
 		verbose:   cfg.Verbose,
 	}
 }
@@ -103,8 +115,8 @@ func (p *Processor) ProcessFile(ctx context.Context, filename string) (*models.P
 		log.Printf("Found %d results from ComicVine", len(issues))
 	}
 
-	// Step 3: Match results using LLM
-	match, err := p.matchResults(ctx, parsed, issues)
+	// Step 3: Match results using Selector
+	match, err := p.selector.Select(ctx, parsed, issues)
 	if err != nil {
 		result.Error = fmt.Sprintf("matching results: %v", err)
 		result.ProcessingTimeMS = time.Since(startTime).Milliseconds()
@@ -210,50 +222,4 @@ func (p *Processor) parseFilename(ctx context.Context, filename string) (*models
 
 	parsed.OriginalFilename = filename
 	return &parsed, nil
-}
-
-// matchResults uses the LLM to select the best match from ComicVine results
-func (p *Processor) matchResults(ctx context.Context, parsed *models.ParsedFilename, issues []models.ComicVineIssue) (*models.MatchResult, error) {
-	result := &models.MatchResult{
-		OriginalFilename: parsed.OriginalFilename,
-		ParsedInfo:       *parsed,
-	}
-
-	if len(issues) == 0 {
-		result.MatchConfidence = "none"
-		result.Reasoning = "No results found in ComicVine"
-		return result, nil
-	}
-
-	prompt := prompts.ResultMatchPrompt(*parsed, issues)
-
-	response, err := p.llmClient.CompleteWithRetry(
-		ctx,
-		prompt,
-		p.cfg.RetryAttempts,
-		time.Duration(p.cfg.RetryDelaySeconds)*time.Second,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("LLM completion: %w", err)
-	}
-
-	// Extract JSON from response
-	jsonStr := llm.ExtractJSON(response)
-
-	var matchResp prompts.MatchResponse
-	if err := json.Unmarshal([]byte(jsonStr), &matchResp); err != nil {
-		return nil, fmt.Errorf("parsing LLM response: %w (response: %s)", err, response)
-	}
-
-	result.MatchConfidence = matchResp.MatchConfidence
-	result.Reasoning = matchResp.Reasoning
-
-	if matchResp.SelectedIndex >= 0 && matchResp.SelectedIndex < len(issues) {
-		selectedIssue := issues[matchResp.SelectedIndex]
-		result.SelectedIssue = &selectedIssue
-		result.ComicVineID = selectedIssue.ID
-		result.ComicVineURL = selectedIssue.SiteDetailURL
-	}
-
-	return result, nil
 }
