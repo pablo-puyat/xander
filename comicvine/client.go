@@ -1,3 +1,5 @@
+// Package comicvine provides a client for the ComicVine API.
+// It includes rate limiting, caching, and search functionality for comic issues and volumes.
 package comicvine
 
 import (
@@ -15,7 +17,32 @@ import (
 	"comic-parser/models"
 )
 
-// Client is a ComicVine API client
+const (
+	// API parameters
+	paramAPIKey      = "api_key"
+	paramFormat      = "format"
+	paramResources   = "resources"
+	paramQuery       = "query"
+	paramLimit       = "limit"
+	paramFieldList   = "field_list"
+	paramFilter      = "filter"
+	formatJSON       = "json"
+	userAgentValue   = "ComicParser/1.0"
+	headerUserAgent  = "User-Agent"
+
+	// Search limits
+	maxVolumesToCheck = 5
+	defaultSearchLimit = 10
+	defaultIssueLimit = 100
+
+	// Volume ID format prefix
+	volumeIDPrefix = "4050-"
+
+	// HTTP client settings
+	defaultHTTPTimeout = 30 * time.Second
+)
+
+// Client is a ComicVine API client.
 type Client struct {
 	apiKey     string
 	baseURL    string
@@ -30,7 +57,7 @@ type Client struct {
 	cacheMutex  sync.RWMutex
 }
 
-// NewClient creates a new ComicVine API client
+// NewClient creates a new ComicVine API client.
 func NewClient(cfg *config.Config) *Client {
 	// ComicVine has a rate limit, default to ~1 request per second
 	ratePerSecond := cfg.RateLimitPerMin / 60
@@ -42,7 +69,7 @@ func NewClient(cfg *config.Config) *Client {
 		apiKey:  cfg.ComicVineAPIKey,
 		baseURL: cfg.ComicVineAPIBaseURL,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: defaultHTTPTimeout,
 		},
 		rateLimiter: time.NewTicker(time.Second / time.Duration(ratePerSecond)),
 		volumeCache: make(map[int]*models.ComicVineVolume),
@@ -95,12 +122,12 @@ func (c *Client) searchByVolumeAndIssue(ctx context.Context, title string, issue
 	seen := make(map[int]bool)
 
 	// Check top matching volumes for the issue
-	maxVolumesToCheck := 5
-	if len(volumes) < maxVolumesToCheck {
-		maxVolumesToCheck = len(volumes)
+	volumeLimit := maxVolumesToCheck
+	if len(volumes) < volumeLimit {
+		volumeLimit = len(volumes)
 	}
 
-	for _, vol := range volumes[:maxVolumesToCheck] {
+	for _, vol := range volumes[:volumeLimit] {
 		issues, err := c.getIssuesForVolume(ctx, vol.ID, issueNumber)
 		if err != nil {
 			continue // Don't fail entirely if one volume lookup fails
@@ -138,12 +165,12 @@ func (c *Client) searchVolumes(ctx context.Context, name string) ([]models.Comic
 	c.rateMutex.Unlock()
 
 	params := url.Values{}
-	params.Set("api_key", c.apiKey)
-	params.Set("format", "json")
-	params.Set("resources", "volume")
-	params.Set("query", name)
-	params.Set("limit", "10")
-	params.Set("field_list", "id,name,start_year,publisher")
+	params.Set(paramAPIKey, c.apiKey)
+	params.Set(paramFormat, formatJSON)
+	params.Set(paramResources, "volume")
+	params.Set(paramQuery, name)
+	params.Set(paramLimit, fmt.Sprintf("%d", defaultSearchLimit))
+	params.Set(paramFieldList, "id,name,start_year,publisher")
 
 	reqURL := fmt.Sprintf("%s/search/?%s", c.baseURL, params.Encode())
 
@@ -152,7 +179,7 @@ func (c *Client) searchVolumes(ctx context.Context, name string) ([]models.Comic
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "ComicParser/1.0")
+	req.Header.Set(headerUserAgent, userAgentValue)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -188,10 +215,10 @@ func (c *Client) getIssuesForVolume(ctx context.Context, volumeID int, issueNumb
 	c.rateMutex.Unlock()
 
 	params := url.Values{}
-	params.Set("api_key", c.apiKey)
-	params.Set("format", "json")
-	params.Set("limit", "100")
-	params.Set("field_list", "id,name,issue_number,cover_date,store_date,site_detail_url,volume,image")
+	params.Set(paramAPIKey, c.apiKey)
+	params.Set(paramFormat, formatJSON)
+	params.Set(paramLimit, fmt.Sprintf("%d", defaultIssueLimit))
+	params.Set(paramFieldList, "id,name,issue_number,cover_date,store_date,site_detail_url,volume,image")
 
 	// Filter by volume
 	filter := fmt.Sprintf("volume:%d", volumeID)
@@ -200,7 +227,7 @@ func (c *Client) getIssuesForVolume(ctx context.Context, volumeID int, issueNumb
 		normalizedIssue := normalizeIssueNumber(issueNumber)
 		filter += fmt.Sprintf(",issue_number:%s", normalizedIssue)
 	}
-	params.Set("filter", filter)
+	params.Set(paramFilter, filter)
 
 	reqURL := fmt.Sprintf("%s/issues/?%s", c.baseURL, params.Encode())
 
@@ -209,7 +236,7 @@ func (c *Client) getIssuesForVolume(ctx context.Context, volumeID int, issueNumb
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "ComicParser/1.0")
+	req.Header.Set(headerUserAgent, userAgentValue)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -248,12 +275,12 @@ func (c *Client) searchIssuesDirectly(ctx context.Context, title string, issueNu
 	}
 
 	params := url.Values{}
-	params.Set("api_key", c.apiKey)
-	params.Set("format", "json")
-	params.Set("resources", "issue")
-	params.Set("query", query)
-	params.Set("limit", "10")
-	params.Set("field_list", "id,name,issue_number,cover_date,store_date,site_detail_url,volume,image")
+	params.Set(paramAPIKey, c.apiKey)
+	params.Set(paramFormat, formatJSON)
+	params.Set(paramResources, "issue")
+	params.Set(paramQuery, query)
+	params.Set(paramLimit, fmt.Sprintf("%d", defaultSearchLimit))
+	params.Set(paramFieldList, "id,name,issue_number,cover_date,store_date,site_detail_url,volume,image")
 
 	reqURL := fmt.Sprintf("%s/search/?%s", c.baseURL, params.Encode())
 
@@ -262,7 +289,7 @@ func (c *Client) searchIssuesDirectly(ctx context.Context, title string, issueNu
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "ComicParser/1.0")
+	req.Header.Set(headerUserAgent, userAgentValue)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -303,18 +330,18 @@ func (c *Client) getVolume(ctx context.Context, volumeID int) (*models.ComicVine
 	c.rateMutex.Unlock()
 
 	params := url.Values{}
-	params.Set("api_key", c.apiKey)
-	params.Set("format", "json")
-	params.Set("field_list", "id,name,start_year,publisher")
+	params.Set(paramAPIKey, c.apiKey)
+	params.Set(paramFormat, formatJSON)
+	params.Set(paramFieldList, "id,name,start_year,publisher")
 
-	reqURL := fmt.Sprintf("%s/volume/4050-%d/?%s", c.baseURL, volumeID, params.Encode())
+	reqURL := fmt.Sprintf("%s/volume/%s%d/?%s", c.baseURL, volumeIDPrefix, volumeID, params.Encode())
 
 	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "ComicParser/1.0")
+	req.Header.Set(headerUserAgent, userAgentValue)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

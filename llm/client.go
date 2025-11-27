@@ -1,3 +1,5 @@
+// Package llm provides an Anthropic API client for LLM interactions.
+// It handles communication with Claude models for parsing and matching operations.
 package llm
 
 import (
@@ -13,7 +15,18 @@ import (
 	"comic-parser/config"
 )
 
-// Client is an Anthropic API client
+const (
+	// API configuration
+	anthropicVersion = "2023-06-01"
+	contentTypeJSON  = "application/json"
+	headerAPIKey     = "x-api-key"
+	headerVersion    = "anthropic-version"
+
+	// HTTP client settings
+	defaultHTTPTimeout = 60 * time.Second
+)
+
+// Client is an Anthropic API client.
 type Client struct {
 	apiKey     string
 	baseURL    string
@@ -68,7 +81,7 @@ type ErrorResponse struct {
 	} `json:"error"`
 }
 
-// NewClient creates a new Anthropic API client
+// NewClient creates a new Anthropic API client.
 func NewClient(cfg *config.Config) *Client {
 	return &Client{
 		apiKey:    cfg.AnthropicAPIKey,
@@ -76,7 +89,7 @@ func NewClient(cfg *config.Config) *Client {
 		model:     cfg.AnthropicModel,
 		maxTokens: cfg.AnthropicMaxTokens,
 		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: defaultHTTPTimeout,
 		},
 	}
 }
@@ -134,9 +147,9 @@ func (c *Client) doRequest(ctx context.Context, req Request) (string, error) {
 		return "", fmt.Errorf("creating request: %w", err)
 	}
 
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", c.apiKey)
-	httpReq.Header.Set("anthropic-version", "2023-06-01")
+	httpReq.Header.Set("Content-Type", contentTypeJSON)
+	httpReq.Header.Set(headerAPIKey, c.apiKey)
+	httpReq.Header.Set(headerVersion, anthropicVersion)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
@@ -178,7 +191,8 @@ func (c *Client) doRequest(ctx context.Context, req Request) (string, error) {
 	return result.String(), nil
 }
 
-// ExtractJSON extracts JSON from LLM response that might have extra text
+// ExtractJSON extracts JSON from LLM response that might have extra text.
+// It handles markdown code blocks and finds valid JSON object boundaries.
 func ExtractJSON(response string) string {
 	// Try to find JSON object boundaries
 	response = strings.TrimSpace(response)

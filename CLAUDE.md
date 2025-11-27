@@ -33,6 +33,47 @@ comic-parser/
 └── prompts/prompts.go      # LLM prompt templates (CRITICAL)
 ```
 
+## Code Organization & Go Best Practices
+
+This codebase follows idiomatic Go patterns and conventions:
+
+### Package Structure
+- **Package documentation**: Every package has a doc comment explaining its purpose
+- **Exported identifiers**: All public functions, types, and constants are documented
+- **Package naming**: Short, lowercase, single-word package names without underscores
+
+### Constants and Configuration
+- **Magic numbers eliminated**: All hardcoded values extracted to named constants
+- **Grouped constants**: Related constants grouped with descriptive comments
+- **Examples**:
+  - `config/config.go`: Default values as constants with `default` prefix
+  - `llm/client.go`: API configuration constants (headers, timeouts, versions)
+  - `comicvine/client.go`: API parameters, limits, and format strings as constants
+
+### Error Handling
+- **Error wrapping**: All errors wrapped with `fmt.Errorf(...: %w, err)` for context
+- **Graceful degradation**: Processing errors captured in results, batch processing continues
+- **Context cancellation**: All operations respect `context.Context` for graceful shutdown
+
+### Concurrency Patterns
+- **Thread-safe access**: Mutexes protect shared state (caches, progress tracking)
+- **RWMutex for caches**: Read-write locks optimize concurrent read access
+- **Worker pools**: Controlled concurrency with configurable worker count
+- **Channel communication**: Results passed via channels for coordination
+
+### Type Safety and Clarity
+- **Structured types**: All data modeled with explicit structs, not maps
+- **Field ordering**: Exported fields before unexported, logical grouping
+- **JSON tags**: Proper snake_case JSON serialization tags
+- **Pointer usage**: Pointers used for optional/nullable fields (`*ComicVineIssue`)
+
+### API Client Patterns
+- **Rate limiting**: Built-in rate limiting using `time.Ticker`
+- **Caching**: Volume cache to reduce redundant API calls
+- **Retries**: Configurable retry logic with exponential backoff
+- **Timeouts**: HTTP clients configured with reasonable timeouts
+- **Context propagation**: All requests accept and respect context
+
 ## Key Design Decisions
 
 ### Two-Stage LLM Approach
@@ -51,6 +92,14 @@ The app searches volumes first, then issues within matching volumes. This is mor
 
 ## Working with the Codebase
 
+### Code Quality Tools
+Before committing changes, always run:
+```bash
+go fmt ./...      # Format all code to Go standards
+go vet ./...      # Static analysis for common errors
+go build ./...    # Ensure everything compiles
+```
+
 ### Adding New Filename Patterns
 Edit `prompts/prompts.go` → `FilenameParsePrompt()`. Add examples to the prompt showing the new pattern. The LLM learns from examples.
 
@@ -62,6 +111,13 @@ Edit `main.go` → `saveResults()`. Add a new case in the switch statement. Foll
 
 ### Changing ComicVine Search Behavior
 Edit `comicvine/client.go` → `SearchIssues()` or `searchByVolumeAndIssue()`. The search strategy is here.
+
+### Adding New Constants
+When adding hardcoded values:
+1. Define as a constant at package level with descriptive name
+2. Group with related constants
+3. Add a comment explaining the purpose or source
+4. Use the constant throughout the code instead of the literal value
 
 ## API Details
 
@@ -101,6 +157,35 @@ case <-ctx.Done():
     return
 default:
 }
+```
+
+### Thread Safety
+When accessing shared state from multiple goroutines:
+```go
+// Use sync.Mutex for exclusive access
+p.progressMu.Lock()
+p.progress.Processed++
+p.progressMu.Unlock()
+
+// Use sync.RWMutex for read-heavy caches
+c.cacheMutex.RLock()
+if vol, ok := c.volumeCache[volumeID]; ok {
+    c.cacheMutex.RUnlock()
+    return vol, nil
+}
+c.cacheMutex.RUnlock()
+```
+
+### Constant Usage
+Use named constants instead of magic strings/numbers:
+```go
+// Good
+params.Set(paramAPIKey, c.apiKey)
+httpReq.Header.Set(headerVersion, anthropicVersion)
+
+// Bad - avoid
+params.Set("api_key", c.apiKey)
+httpReq.Header.Set("anthropic-version", "2023-06-01")
 ```
 
 ## Common Tasks

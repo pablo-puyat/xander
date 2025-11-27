@@ -1,8 +1,10 @@
+// Package models defines all data structures used throughout the comic parser application.
+// These models represent parsed filenames, ComicVine API responses, and processing results.
 package models
 
 import "time"
 
-// ParsedFilename represents the LLM-extracted information from a comic filename
+// ParsedFilename represents the LLM-extracted information from a comic filename.
 type ParsedFilename struct {
 	OriginalFilename string `json:"original_filename"`
 	Title            string `json:"title"`

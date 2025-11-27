@@ -1,3 +1,5 @@
+// Package prompts contains LLM prompt templates for comic parsing and matching.
+// These prompts are critical to the application's accuracy and should be tuned carefully.
 package prompts
 
 import (
@@ -7,7 +9,8 @@ import (
 	"comic-parser/models"
 )
 
-// FilenameParsePrompt generates the prompt for parsing a comic filename
+// FilenameParsePrompt generates the prompt for parsing a comic filename.
+// This prompt instructs the LLM to extract structured information from various filename formats.
 func FilenameParsePrompt(filename string) string {
 	return fmt.Sprintf(`You are a comic book filename parser. Your task is to extract structured information from comic book archive filenames (CBR/CBZ files).
 
@@ -44,7 +47,8 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
 }`, filename)
 }
 
-// ResultMatchPrompt generates the prompt for selecting the best ComicVine match
+// ResultMatchPrompt generates the prompt for selecting the best ComicVine match.
+// It presents the LLM with parsed information and search results to make an informed choice.
 func ResultMatchPrompt(parsed models.ParsedFilename, results []models.ComicVineIssue) string {
 	// Prepare a simplified view of the results for the LLM
 	type SimpleResult struct {
@@ -118,7 +122,7 @@ Respond with ONLY a JSON object in this exact format (no markdown, no explanatio
 		string(resultsJSON))
 }
 
-// MatchResponse represents the LLM's response to the matching prompt
+// MatchResponse represents the LLM's response to the matching prompt.
 type MatchResponse struct {
 	SelectedIndex   int    `json:"selected_index"`
 	MatchConfidence string `json:"match_confidence"`

@@ -1,3 +1,5 @@
+// Package processor orchestrates the comic parsing and matching workflow.
+// It coordinates between LLM parsing, ComicVine searches, and batch processing.
 package processor
 
 import (
@@ -15,7 +17,7 @@ import (
 	"comic-parser/prompts"
 )
 
-// Processor orchestrates the comic parsing and matching workflow
+// Processor orchestrates the comic parsing and matching workflow.
 type Processor struct {
 	cfg         *config.Config
 	llmClient   *llm.Client
@@ -27,7 +29,7 @@ type Processor struct {
 	progress   models.BatchProgress
 }
 
-// NewProcessor creates a new processor
+// NewProcessor creates a new processor.
 func NewProcessor(cfg *config.Config) *Processor {
 	return &Processor{
 		cfg:       cfg,
@@ -37,12 +39,13 @@ func NewProcessor(cfg *config.Config) *Processor {
 	}
 }
 
-// Close cleans up processor resources
+// Close cleans up processor resources.
 func (p *Processor) Close() {
 	p.cvClient.Close()
 }
 
-// ProcessFile processes a single comic filename
+// ProcessFile processes a single comic filename.
+// It returns a ProcessingResult containing match information or an error description.
 func (p *Processor) ProcessFile(ctx context.Context, filename string) (*models.ProcessingResult, error) {
 	startTime := time.Now()
 
@@ -110,7 +113,8 @@ func (p *Processor) ProcessFile(ctx context.Context, filename string) (*models.P
 	return result, nil
 }
 
-// ProcessBatch processes multiple files concurrently
+// ProcessBatch processes multiple files concurrently using a worker pool.
+// Results are sent to the provided channel as they complete.
 func (p *Processor) ProcessBatch(ctx context.Context, filenames []string, resultChan chan<- *models.ProcessingResult) {
 	p.progress = models.BatchProgress{
 		Total: len(filenames),
@@ -158,7 +162,7 @@ func (p *Processor) ProcessBatch(ctx context.Context, filenames []string, result
 	wg.Wait()
 }
 
-// GetProgress returns the current processing progress
+// GetProgress returns the current processing progress in a thread-safe manner.
 func (p *Processor) GetProgress() models.BatchProgress {
 	p.progressMu.Lock()
 	defer p.progressMu.Unlock()

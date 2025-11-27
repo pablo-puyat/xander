@@ -1,9 +1,36 @@
+// Package config provides configuration management for the comic parser application.
+// It supports loading configuration from JSON files and environment variables.
 package config
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+)
+
+const (
+	// Default API configuration
+	defaultAnthropicModel      = "claude-sonnet-4-20250514"
+	defaultAnthropicMaxTokens  = 1024
+	defaultAnthropicAPIBaseURL = "https://api.anthropic.com/v1"
+	defaultComicVineAPIBaseURL = "https://comicvine.gamespot.com/api"
+
+	// Default processing settings
+	defaultWorkerCount       = 3
+	defaultRateLimitPerMin   = 30
+	defaultRetryAttempts     = 3
+	defaultRetryDelaySeconds = 2
+
+	// Default cache settings
+	defaultCacheDir = ".cache"
+
+	// Default output settings
+	defaultOutputFile   = "results.json"
+	defaultOutputFormat = "json"
+
+	// Environment variable names
+	envAnthropicAPIKey = "ANTHROPIC_API_KEY"
+	envComicVineAPIKey = "COMICVINE_API_KEY"
 )
 
 // Config holds all configuration for the application
@@ -34,21 +61,21 @@ type Config struct {
 	Verbose      bool   `json:"verbose"`
 }
 
-// DefaultConfig returns a configuration with sensible defaults
+// DefaultConfig returns a configuration with sensible defaults.
 func DefaultConfig() *Config {
 	return &Config{
-		AnthropicModel:      "claude-sonnet-4-20250514",
-		AnthropicMaxTokens:  1024,
-		AnthropicAPIBaseURL: "https://api.anthropic.com/v1",
-		ComicVineAPIBaseURL: "https://comicvine.gamespot.com/api",
-		WorkerCount:         3,  // Conservative to respect rate limits
-		RateLimitPerMin:     30, // Anthropic rate limit consideration
-		RetryAttempts:       3,
-		RetryDelaySeconds:   2,
+		AnthropicModel:      defaultAnthropicModel,
+		AnthropicMaxTokens:  defaultAnthropicMaxTokens,
+		AnthropicAPIBaseURL: defaultAnthropicAPIBaseURL,
+		ComicVineAPIBaseURL: defaultComicVineAPIBaseURL,
+		WorkerCount:         defaultWorkerCount,
+		RateLimitPerMin:     defaultRateLimitPerMin,
+		RetryAttempts:       defaultRetryAttempts,
+		RetryDelaySeconds:   defaultRetryDelaySeconds,
 		CacheEnabled:        true,
-		CacheDir:            ".cache",
-		OutputFile:          "results.json",
-		OutputFormat:        "json",
+		CacheDir:            defaultCacheDir,
+		OutputFile:          defaultOutputFile,
+		OutputFormat:        defaultOutputFormat,
 		Verbose:             false,
 	}
 }
@@ -72,23 +99,23 @@ func LoadConfig(path string) (*Config, error) {
 	return cfg, nil
 }
 
-// LoadFromEnv loads API keys from environment variables
+// LoadFromEnv loads API keys from environment variables.
 func (c *Config) LoadFromEnv() {
-	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
+	if key := os.Getenv(envAnthropicAPIKey); key != "" {
 		c.AnthropicAPIKey = key
 	}
-	if key := os.Getenv("COMICVINE_API_KEY"); key != "" {
+	if key := os.Getenv(envComicVineAPIKey); key != "" {
 		c.ComicVineAPIKey = key
 	}
 }
 
-// Validate checks that required configuration is present
+// Validate checks that required configuration is present.
 func (c *Config) Validate() error {
 	if c.AnthropicAPIKey == "" {
-		return fmt.Errorf("anthropic API key is required (set ANTHROPIC_API_KEY env var or in config)")
+		return fmt.Errorf("anthropic API key is required (set %s env var or in config)", envAnthropicAPIKey)
 	}
 	if c.ComicVineAPIKey == "" {
-		return fmt.Errorf("comicvine API key is required (set COMICVINE_API_KEY env var or in config)")
+		return fmt.Errorf("comicvine API key is required (set %s env var or in config)", envComicVineAPIKey)
 	}
 	return nil
 }
