@@ -14,6 +14,7 @@ import (
 	"comic-parser/config"
 	"comic-parser/llm"
 	"comic-parser/models"
+	"comic-parser/parser"
 	"comic-parser/prompts"
 	"comic-parser/selector"
 )
@@ -32,11 +33,12 @@ type CVClient interface {
 
 // Processor orchestrates the comic parsing and matching workflow.
 type Processor struct {
-	cfg       *config.Config
-	llmClient LLMClient
-	cvClient  CVClient
-	selector  selector.Selector
-	verbose   bool
+	cfg         *config.Config
+	llmClient   LLMClient
+	regexParser parser.Parser
+	cvClient    CVClient
+	selector    selector.Selector
+	verbose     bool
 
 	// Progress tracking
 	progressMu sync.Mutex
@@ -55,11 +57,12 @@ func NewProcessor(cfg *config.Config) *Processor {
 	}
 
 	return &Processor{
-		cfg:       cfg,
-		llmClient: llmClient,
-		cvClient:  comicvine.NewClient(cfg),
-		selector:  sel,
-		verbose:   cfg.Verbose,
+		cfg:         cfg,
+		llmClient:   llmClient,
+		regexParser: parser.NewRegexParser(),
+		cvClient:    comicvine.NewClient(cfg),
+		selector:    sel,
+		verbose:     cfg.Verbose,
 	}
 }
 
@@ -198,8 +201,29 @@ func (p *Processor) GetProgress() models.BatchProgress {
 	return p.progress
 }
 
-// parseFilename uses the LLM to parse a comic filename
+// parseFilename orchestrates parsing, trying regex first then falling back to LLM
 func (p *Processor) parseFilename(ctx context.Context, filename string) (*models.ParsedFilename, error) {
+	// Try regex parser first
+	if parsed, err := p.regexParser.Parse(filename); err == nil && parsed.Title != "" {
+		if p.verbose {
+			log.Printf("Regex parser successful for: %s", filename)
+		}
+		// Consider regex result valid if we have a title
+		return parsed, nil
+	} else if p.verbose {
+		// Only log detail if we had a non-empty result that was rejected, or just verbose logging
+		if parsed != nil {
+			log.Printf("Regex parser skipped (title=%q), falling back to LLM", parsed.Title)
+		} else {
+			log.Printf("Regex parser failed (err=%v), falling back to LLM", err)
+		}
+	}
+
+	return p.parseFilenameLLM(ctx, filename)
+}
+
+// parseFilenameLLM uses the LLM to parse a comic filename
+func (p *Processor) parseFilenameLLM(ctx context.Context, filename string) (*models.ParsedFilename, error) {
 	prompt := prompts.FilenameParsePrompt(filename)
 
 	response, err := p.llmClient.CompleteWithRetry(
