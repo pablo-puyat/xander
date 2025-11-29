@@ -4,7 +4,6 @@ package processor
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -14,7 +13,7 @@ import (
 	"comic-parser/config"
 	"comic-parser/llm"
 	"comic-parser/models"
-	"comic-parser/prompts"
+	"comic-parser/parser"
 	"comic-parser/selector"
 )
 
@@ -34,6 +33,7 @@ type CVClient interface {
 type Processor struct {
 	cfg       *config.Config
 	llmClient LLMClient
+	parser    parser.Parser
 	cvClient  CVClient
 	selector  selector.Selector
 	verbose   bool
@@ -54,9 +54,15 @@ func NewProcessor(cfg *config.Config) *Processor {
 		sel = selector.NewLLMSelector(llmClient, cfg)
 	}
 
+	// Setup parser pipeline
+	regexParser := parser.NewRegexParser()
+	llmParser := parser.NewLLMParser(llmClient, cfg)
+	pipeline := parser.NewPipelineParser(regexParser, llmParser)
+
 	return &Processor{
 		cfg:       cfg,
 		llmClient: llmClient,
+		parser:    pipeline,
 		cvClient:  comicvine.NewClient(cfg),
 		selector:  sel,
 		verbose:   cfg.Verbose,
@@ -83,12 +89,15 @@ func (p *Processor) ProcessFile(ctx context.Context, filename string) (*models.P
 		ProcessedAt: startTime,
 	}
 
-	// Step 1: Parse the filename using LLM
+	// Step 1: Parse the filename using Parser Pipeline
 	if p.verbose {
 		log.Printf("Parsing filename: %s", filename)
 	}
 
-	parsed, err := p.parseFilename(ctx, filename)
+	input := models.ParsedFilename{OriginalFilename: filename}
+	parsedVal, err := p.parser.Parse(ctx, input)
+	parsed := &parsedVal
+
 	if err != nil {
 		result.Error = fmt.Sprintf("parsing filename: %v", err)
 		result.ProcessingTimeMS = time.Since(startTime).Milliseconds()
@@ -198,28 +207,3 @@ func (p *Processor) GetProgress() models.BatchProgress {
 	return p.progress
 }
 
-// parseFilename uses the LLM to parse a comic filename
-func (p *Processor) parseFilename(ctx context.Context, filename string) (*models.ParsedFilename, error) {
-	prompt := prompts.FilenameParsePrompt(filename)
-
-	response, err := p.llmClient.CompleteWithRetry(
-		ctx,
-		prompt,
-		p.cfg.RetryAttempts,
-		time.Duration(p.cfg.RetryDelaySeconds)*time.Second,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("LLM completion: %w", err)
-	}
-
-	// Extract JSON from response
-	jsonStr := llm.ExtractJSON(response)
-
-	var parsed models.ParsedFilename
-	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
-		return nil, fmt.Errorf("parsing LLM response: %w (response: %s)", err, response)
-	}
-
-	parsed.OriginalFilename = filename
-	return &parsed, nil
-}

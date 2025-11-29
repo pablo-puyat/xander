@@ -8,6 +8,7 @@ import (
 
 	"comic-parser/config"
 	"comic-parser/models"
+	"comic-parser/parser"
 	"comic-parser/selector"
 )
 
@@ -45,10 +46,15 @@ func TestProcessFile(t *testing.T) {
 	mockLLM := &MockLLMClient{}
 	mockCV := &MockCVClient{}
 
+	regexParser := parser.NewRegexParser()
+	llmParser := parser.NewLLMParser(mockLLM, cfg)
+	pipeline := parser.NewPipelineParser(regexParser, llmParser)
+
 	proc := &Processor{
 		cfg:       cfg,
 		llmClient: mockLLM,
 		cvClient:  mockCV,
+		parser:    pipeline,
 		verbose:   true,
 		selector:  selector.NewLLMSelector(mockLLM, cfg),
 	}
@@ -114,10 +120,15 @@ func TestProcessFile_ParseError(t *testing.T) {
 	mockLLM := &MockLLMClient{}
 	mockCV := &MockCVClient{}
 
+	regexParser := parser.NewRegexParser()
+	llmParser := parser.NewLLMParser(mockLLM, cfg)
+	pipeline := parser.NewPipelineParser(regexParser, llmParser)
+
 	proc := &Processor{
 		cfg:       cfg,
 		llmClient: mockLLM,
 		cvClient:  mockCV,
+		parser:    pipeline,
 		selector:  selector.NewLLMSelector(mockLLM, cfg),
 	}
 
