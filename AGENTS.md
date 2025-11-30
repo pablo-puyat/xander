@@ -8,7 +8,7 @@ This is a Go application that parses comic book archive filenames (CBR/CBZ) and 
 
 ```bash
 # Build
-go build -o comic-parser .
+go build -o comic-parser ./cmd/comic-parser
 
 # Test single file
 ./comic-parser -file "Amazing Spider-Man 001 (2018).cbz" -verbose
@@ -24,13 +24,16 @@ go build -o comic-parser .
 
 ```
 comic-parser/
-├── main.go                 # CLI entry point, flag parsing, output handling
-├── config/config.go        # Configuration from env vars and JSON file
-├── llm/client.go           # Anthropic API client (Claude)
-├── comicvine/client.go     # ComicVine API client with rate limiting
-├── models/models.go        # All data structures
-├── processor/processor.go  # Main orchestration, worker pool
-└── prompts/prompts.go      # LLM prompt templates (CRITICAL)
+├── cmd/
+│   └── comic-parser/
+│       └── main.go         # CLI entry point, flag parsing, output handling
+├── internal/
+│   ├── config/config.go        # Configuration from env vars and JSON file
+│   ├── llm/client.go           # Anthropic API client (Claude)
+│   ├── comicvine/client.go     # ComicVine API client with rate limiting
+│   ├── models/models.go        # All data structures
+│   ├── processor/processor.go  # Main orchestration, worker pool
+│   └── prompts/prompts.go      # LLM prompt templates (CRITICAL)
 ```
 
 ## Code Organization & Go Best Practices

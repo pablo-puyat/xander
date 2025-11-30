@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"comic-parser/models"
+	"comic-parser/internal/models"
 )
 
 // FilenameParsePrompt generates the prompt for parsing a comic filename.

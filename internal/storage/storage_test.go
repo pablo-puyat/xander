@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"comic-parser/models"
+	"comic-parser/internal/models"
 )
 
 func TestStorage(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"comic-parser/db"
-	"comic-parser/models"
+	"comic-parser/internal/db"
+	"comic-parser/internal/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )

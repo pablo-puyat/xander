@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -15,10 +16,13 @@ import (
 	"syscall"
 	"time"
 
-	"comic-parser/config"
-	"comic-parser/models"
-	"comic-parser/processor"
-	"comic-parser/storage"
+	"comic-parser/internal/comicvine"
+	"comic-parser/internal/config"
+	"comic-parser/internal/llm"
+	"comic-parser/internal/models"
+	"comic-parser/internal/processor"
+	"comic-parser/internal/selector"
+	"comic-parser/internal/storage"
 )
 
 func main() {
@@ -72,8 +76,25 @@ func main() {
 		log.Fatalf("Configuration error: %v", err)
 	}
 
+	// Create shared HTTP client
+	httpClient := &http.Client{
+		Timeout: 60 * time.Second,
+	}
+
+	// Create dependencies
+	llmClient := llm.NewClient(cfg, httpClient)
+	cvClient := comicvine.NewClient(cfg, httpClient)
+
+	// Create selector
+	var sel selector.Selector
+	if cfg.Interactive {
+		sel = selector.NewTUISelector()
+	} else {
+		sel = selector.NewLLMSelector(llmClient, cfg)
+	}
+
 	// Create processor
-	proc := processor.NewProcessor(cfg)
+	proc := processor.NewProcessor(cfg, llmClient, cvClient, sel)
 	defer proc.Close()
 
 	// Setup context with cancellation

@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"comic-parser/config"
-	"comic-parser/models"
+	"comic-parser/internal/config"
+	"comic-parser/internal/models"
 )
 
 const (
@@ -38,15 +38,18 @@ const (
 	// Volume ID format prefix
 	volumeIDPrefix = "4050-"
 
-	// HTTP client settings
-	defaultHTTPTimeout = 30 * time.Second
 )
+
+// HTTPClient defines the interface for making HTTP requests
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 // Client is a ComicVine API client.
 type Client struct {
 	apiKey     string
 	baseURL    string
-	httpClient *http.Client
+	httpClient HTTPClient
 
 	// Rate limiting
 	rateLimiter *time.Ticker
@@ -59,17 +62,15 @@ type Client struct {
 }
 
 // NewClient creates a new ComicVine API client.
-func NewClient(cfg *config.Config) *Client {
+func NewClient(cfg *config.Config, httpClient HTTPClient) *Client {
 	// ComicVine has a rate limit, fixed at ~1 request per second
 	// We use 1.2 seconds to be safe and conservative
 	rateInterval := 1200 * time.Millisecond
 
 	return &Client{
-		apiKey:  cfg.ComicVineAPIKey,
-		baseURL: cfg.ComicVineAPIBaseURL,
-		httpClient: &http.Client{
-			Timeout: defaultHTTPTimeout,
-		},
+		apiKey:      cfg.ComicVineAPIKey,
+		baseURL:     cfg.ComicVineAPIBaseURL,
+		httpClient:  httpClient,
 		rateLimiter: time.NewTicker(rateInterval),
 		volumeCache: make(map[int]*models.ComicVineVolume),
 		searchCache: make(map[string][]models.ComicVineVolume),

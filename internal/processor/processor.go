@@ -10,12 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"comic-parser/comicvine"
-	"comic-parser/config"
-	"comic-parser/llm"
-	"comic-parser/models"
-	"comic-parser/prompts"
-	"comic-parser/selector"
+	"comic-parser/internal/config"
+	"comic-parser/internal/llm"
+	"comic-parser/internal/models"
+	"comic-parser/internal/prompts"
+	"comic-parser/internal/selector"
 )
 
 // LLMClient defines the interface for LLM interactions.
@@ -44,20 +43,11 @@ type Processor struct {
 }
 
 // NewProcessor creates a new processor.
-func NewProcessor(cfg *config.Config) *Processor {
-	llmClient := llm.NewClient(cfg)
-
-	var sel selector.Selector
-	if cfg.Interactive {
-		sel = selector.NewTUISelector()
-	} else {
-		sel = selector.NewLLMSelector(llmClient, cfg)
-	}
-
+func NewProcessor(cfg *config.Config, llmClient LLMClient, cvClient CVClient, sel selector.Selector) *Processor {
 	return &Processor{
 		cfg:       cfg,
 		llmClient: llmClient,
-		cvClient:  comicvine.NewClient(cfg),
+		cvClient:  cvClient,
 		selector:  sel,
 		verbose:   cfg.Verbose,
 	}
