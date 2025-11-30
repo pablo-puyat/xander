@@ -27,7 +27,7 @@ A Go application that uses Claude (Anthropic's LLM) to parse comic book archive 
 cd comic-parser
 
 # Build
-go build -o comic-parser .
+go build -o comic-parser ./cmd/comic-parser
 ```
 
 ## Configuration
@@ -217,19 +217,22 @@ jq -s 'add' results_batch_*.json > all_results.json
 
 ```
 comic-parser/
-├── main.go                 # CLI entry point
-├── config/
-│   └── config.go          # Configuration management
-├── llm/
-│   └── client.go          # Anthropic API client
-├── comicvine/
-│   └── client.go          # ComicVine API client
-├── models/
-│   └── models.go          # Data structures
-├── processor/
-│   └── processor.go       # Main orchestration
-└── prompts/
-    └── prompts.go         # LLM prompt templates
+├── cmd/
+│   └── comic-parser/
+│       └── main.go        # CLI entry point
+├── internal/
+│   ├── config/
+│   │   └── config.go      # Configuration management
+│   ├── llm/
+│   │   └── client.go      # Anthropic API client
+│   ├── comicvine/
+│   │   └── client.go      # ComicVine API client
+│   ├── models/
+│   │   └── models.go      # Data structures
+│   ├── processor/
+│   │   └── processor.go   # Main orchestration
+│   └── prompts/
+│       └── prompts.go     # LLM prompt templates
 ```
 
 ## How It Works

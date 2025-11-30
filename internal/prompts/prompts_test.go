@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"comic-parser/models"
+	"comic-parser/internal/models"
 )
 
 func TestFilenameParsePrompt(t *testing.T) {

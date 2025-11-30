@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"comic-parser/config"
-	"comic-parser/llm"
-	"comic-parser/models"
-	"comic-parser/prompts"
+	"comic-parser/internal/config"
+	"comic-parser/internal/llm"
+	"comic-parser/internal/models"
+	"comic-parser/internal/prompts"
 )
 
 // LLMSelector uses an LLM to select the best match from candidates.

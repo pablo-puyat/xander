@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"comic-parser/models"
+	"comic-parser/internal/models"
 )
 
 // Selector defines the interface for selecting a match from ComicVine results.

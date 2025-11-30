@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"comic-parser/config"
+	"comic-parser/internal/config"
 )
 
 const (
@@ -22,10 +22,12 @@ const (
 	contentTypeJSON  = "application/json"
 	headerAPIKey     = "x-api-key"
 	headerVersion    = "anthropic-version"
-
-	// HTTP client settings
-	defaultHTTPTimeout = 60 * time.Second
 )
+
+// HTTPClient defines the interface for making HTTP requests
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 // Client is an Anthropic API client.
 type Client struct {
@@ -33,7 +35,7 @@ type Client struct {
 	baseURL     string
 	model       string
 	maxTokens   int
-	httpClient  *http.Client
+	httpClient  HTTPClient
 	rateLimiter *time.Ticker
 }
 
@@ -84,7 +86,7 @@ type ErrorResponse struct {
 }
 
 // NewClient creates a new Anthropic API client.
-func NewClient(cfg *config.Config) *Client {
+func NewClient(cfg *config.Config, httpClient HTTPClient) *Client {
 	// Calculate rate limit interval
 	limit := cfg.RateLimitPerMin
 	if limit <= 0 {
@@ -93,13 +95,11 @@ func NewClient(cfg *config.Config) *Client {
 	interval := time.Minute / time.Duration(limit)
 
 	return &Client{
-		apiKey:    cfg.AnthropicAPIKey,
-		baseURL:   cfg.AnthropicAPIBaseURL,
-		model:     cfg.AnthropicModel,
-		maxTokens: cfg.AnthropicMaxTokens,
-		httpClient: &http.Client{
-			Timeout: defaultHTTPTimeout,
-		},
+		apiKey:      cfg.AnthropicAPIKey,
+		baseURL:     cfg.AnthropicAPIBaseURL,
+		model:       cfg.AnthropicModel,
+		maxTokens:   cfg.AnthropicMaxTokens,
+		httpClient:  httpClient,
 		rateLimiter: time.NewTicker(interval),
 	}
 }

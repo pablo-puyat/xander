@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"comic-parser/models"
+	"comic-parser/internal/models"
 )
 
 // TUISelector presents candidates to the user via CLI.

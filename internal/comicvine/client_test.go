@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"comic-parser/config"
-	"comic-parser/models"
+	"comic-parser/internal/config"
+	"comic-parser/internal/models"
 )
 
 func TestNormalizeIssueNumber(t *testing.T) {
@@ -45,7 +45,7 @@ func TestNewClient(t *testing.T) {
 		ComicVineAPIBaseURL: "http://example.com",
 	}
 
-	client := NewClient(cfg)
+	client := NewClient(cfg, http.DefaultClient)
 	defer client.Close()
 
 	if client.apiKey != "test-key" {
@@ -97,7 +97,7 @@ func TestSearchVolumes(t *testing.T) {
 		ComicVineAPIBaseURL: ts.URL,
 	}
 
-	client := NewClient(cfg)
+	client := NewClient(cfg, ts.Client())
 	defer client.Close()
 
 	// Speed up rate limiter for test
