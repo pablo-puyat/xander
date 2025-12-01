@@ -4,24 +4,16 @@ package processor
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"comic-parser/internal/config"
-	"comic-parser/internal/llm"
 	"comic-parser/internal/models"
-	"comic-parser/internal/prompts"
+	"comic-parser/internal/parser"
 	"comic-parser/internal/selector"
 )
-
-// LLMClient defines the interface for LLM interactions.
-type LLMClient interface {
-	CompleteWithRetry(ctx context.Context, prompt string, maxRetries int, delay time.Duration) (string, error)
-	Close()
-}
 
 // CVClient defines the interface for ComicVine interactions.
 type CVClient interface {
@@ -31,11 +23,11 @@ type CVClient interface {
 
 // Processor orchestrates the comic parsing and matching workflow.
 type Processor struct {
-	cfg       *config.Config
-	llmClient LLMClient
-	cvClient  CVClient
-	selector  selector.Selector
-	verbose   bool
+	cfg      *config.Config
+	parser   parser.Parser
+	cvClient CVClient
+	selector selector.Selector
+	verbose  bool
 
 	// Progress tracking
 	progressMu sync.Mutex
@@ -43,13 +35,13 @@ type Processor struct {
 }
 
 // NewProcessor creates a new processor.
-func NewProcessor(cfg *config.Config, llmClient LLMClient, cvClient CVClient, sel selector.Selector) *Processor {
+func NewProcessor(cfg *config.Config, p parser.Parser, cvClient CVClient, sel selector.Selector) *Processor {
 	return &Processor{
-		cfg:       cfg,
-		llmClient: llmClient,
-		cvClient:  cvClient,
-		selector:  sel,
-		verbose:   cfg.Verbose,
+		cfg:      cfg,
+		parser:   p,
+		cvClient: cvClient,
+		selector: sel,
+		verbose:  cfg.Verbose,
 	}
 }
 
@@ -58,9 +50,7 @@ func (p *Processor) Close() {
 	if p.cvClient != nil {
 		p.cvClient.Close()
 	}
-	if p.llmClient != nil {
-		p.llmClient.Close()
-	}
+	// Parser is managed externally
 }
 
 // ProcessFile processes a single comic filename.
@@ -73,12 +63,12 @@ func (p *Processor) ProcessFile(ctx context.Context, filename string) (*models.P
 		ProcessedAt: startTime,
 	}
 
-	// Step 1: Parse the filename using LLM
+	// Step 1: Parse the filename
 	if p.verbose {
 		log.Printf("Parsing filename: %s", filename)
 	}
 
-	parsed, err := p.parseFilename(ctx, filename)
+	parsed, err := p.parser.Parse(ctx, &models.ParsedFilename{OriginalFilename: filename})
 	if err != nil {
 		result.Error = fmt.Sprintf("parsing filename: %v", err)
 		result.ProcessingTimeMS = time.Since(startTime).Milliseconds()
@@ -186,30 +176,4 @@ func (p *Processor) GetProgress() models.BatchProgress {
 	p.progressMu.Lock()
 	defer p.progressMu.Unlock()
 	return p.progress
-}
-
-// parseFilename uses the LLM to parse a comic filename
-func (p *Processor) parseFilename(ctx context.Context, filename string) (*models.ParsedFilename, error) {
-	prompt := prompts.FilenameParsePrompt(filename)
-
-	response, err := p.llmClient.CompleteWithRetry(
-		ctx,
-		prompt,
-		p.cfg.RetryAttempts,
-		time.Duration(p.cfg.RetryDelaySeconds)*time.Second,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("LLM completion: %w", err)
-	}
-
-	// Extract JSON from response
-	jsonStr := llm.ExtractJSON(response)
-
-	var parsed models.ParsedFilename
-	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
-		return nil, fmt.Errorf("parsing LLM response: %w (response: %s)", err, response)
-	}
-
-	parsed.OriginalFilename = filename
-	return &parsed, nil
 }
