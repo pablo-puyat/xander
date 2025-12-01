@@ -37,7 +37,6 @@ const (
 
 	// Volume ID format prefix
 	volumeIDPrefix = "4050-"
-
 )
 
 // HTTPClient defines the interface for making HTTP requests

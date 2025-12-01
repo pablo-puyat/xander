@@ -2,26 +2,24 @@ package processor
 
 import (
 	"context"
+	"errors"
 	"testing"
-	"time"
 
 	"comic-parser/internal/config"
 	"comic-parser/internal/models"
 )
 
-// MockLLMClient implements LLMClient
-type MockLLMClient struct {
-	CompleteFunc func(ctx context.Context, prompt string) (string, error)
+// MockParser implements parser.Parser
+type MockParser struct {
+	ParseFunc func(ctx context.Context, input *models.ParsedFilename) (*models.ParsedFilename, error)
 }
 
-func (m *MockLLMClient) CompleteWithRetry(ctx context.Context, prompt string, maxRetries int, delay time.Duration) (string, error) {
-	if m.CompleteFunc != nil {
-		return m.CompleteFunc(ctx, prompt)
+func (m *MockParser) Parse(ctx context.Context, input *models.ParsedFilename) (*models.ParsedFilename, error) {
+	if m.ParseFunc != nil {
+		return m.ParseFunc(ctx, input)
 	}
-	return "", nil
+	return nil, nil
 }
-
-func (m *MockLLMClient) Close() {}
 
 // MockCVClient implements CVClient
 type MockCVClient struct {
@@ -53,7 +51,8 @@ func TestProcessor_ProcessFile(t *testing.T) {
 	tests := []struct {
 		name          string
 		filename      string
-		mockLLMResp   string
+		mockParsed    *models.ParsedFilename
+		mockParseErr  error
 		mockIssues    []models.ComicVineIssue
 		mockMatch     *models.MatchResult
 		expectedError bool
@@ -62,12 +61,12 @@ func TestProcessor_ProcessFile(t *testing.T) {
 		{
 			name:     "Successful match",
 			filename: "Amazing Spider-Man 001.cbz",
-			mockLLMResp: `{
-				"title": "Amazing Spider-Man",
-				"issue_number": "1",
-				"year": "2018",
-				"confidence": "high"
-			}`,
+			mockParsed: &models.ParsedFilename{
+				Title:       "Amazing Spider-Man",
+				IssueNumber: "1",
+				Year:        "2018",
+				Confidence:  "high",
+			},
 			mockIssues: []models.ComicVineIssue{
 				{ID: 1, Name: "Amazing Spider-Man", IssueNumber: "1"},
 			},
@@ -89,9 +88,9 @@ func TestProcessor_ProcessFile(t *testing.T) {
 			},
 		},
 		{
-			name:     "LLM Parse Error",
-			filename: "Broken.cbz",
-			mockLLMResp: `invalid json`,
+			name:          "Parse Error",
+			filename:      "Broken.cbz",
+			mockParseErr:  errors.New("parsing failed"),
 			expectedError: false, // ProcessFile captures error in result
 			checkMatch: func(t *testing.T, res *models.ProcessingResult) {
 				if res.Success {
@@ -108,9 +107,17 @@ func TestProcessor_ProcessFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := config.DefaultConfig()
 
-			llmClient := &MockLLMClient{
-				CompleteFunc: func(ctx context.Context, prompt string) (string, error) {
-					return tt.mockLLMResp, nil
+			parserMock := &MockParser{
+				ParseFunc: func(ctx context.Context, input *models.ParsedFilename) (*models.ParsedFilename, error) {
+					if tt.mockParseErr != nil {
+						return nil, tt.mockParseErr
+					}
+					// Ensure original filename is set
+					res := tt.mockParsed
+					if res != nil {
+						res.OriginalFilename = input.OriginalFilename
+					}
+					return res, nil
 				},
 			}
 
@@ -131,7 +138,7 @@ func TestProcessor_ProcessFile(t *testing.T) {
 				},
 			}
 
-			proc := NewProcessor(cfg, llmClient, cvClient, sel)
+			proc := NewProcessor(cfg, parserMock, cvClient, sel)
 			ctx := context.Background()
 
 			result, err := proc.ProcessFile(ctx, tt.filename)

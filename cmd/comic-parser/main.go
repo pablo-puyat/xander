@@ -20,6 +20,7 @@ import (
 	"comic-parser/internal/config"
 	"comic-parser/internal/llm"
 	"comic-parser/internal/models"
+	"comic-parser/internal/parser"
 	"comic-parser/internal/processor"
 	"comic-parser/internal/selector"
 	"comic-parser/internal/storage"
@@ -83,7 +84,14 @@ func main() {
 
 	// Create dependencies
 	llmClient := llm.NewClient(cfg, httpClient)
+	defer llmClient.Close()
+
 	cvClient := comicvine.NewClient(cfg, httpClient)
+
+	// Create parsers
+	regexParser := parser.NewRegexParser()
+	llmParser := parser.NewLLMParser(llmClient, cfg.RetryAttempts, cfg.RetryDelaySeconds)
+	chainParser := parser.NewChainParser(regexParser, llmParser)
 
 	// Create selector
 	var sel selector.Selector
@@ -94,7 +102,7 @@ func main() {
 	}
 
 	// Create processor
-	proc := processor.NewProcessor(cfg, llmClient, cvClient, sel)
+	proc := processor.NewProcessor(cfg, chainParser, cvClient, sel)
 	defer proc.Close()
 
 	// Setup context with cancellation
