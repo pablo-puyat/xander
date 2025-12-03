@@ -33,7 +33,8 @@ type ComicVineVolume struct {
 
 type ParsedFilename struct {
 	ID                 int64
-	ProcessingResultID int64
+	ProcessingResultID sql.NullInt64
+	ParserName         string
 	OriginalFilename   string
 	Title              string
 	IssueNumber        string

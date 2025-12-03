@@ -13,6 +13,7 @@ import (
 	"comic-parser/internal/models"
 	"comic-parser/internal/parser"
 	"comic-parser/internal/selector"
+	"comic-parser/internal/storage"
 )
 
 // CVClient defines the interface for ComicVine interactions.
@@ -27,6 +28,7 @@ type Processor struct {
 	parser   parser.Parser
 	cvClient CVClient
 	selector selector.Selector
+	store    *storage.Storage
 	verbose  bool
 
 	// Progress tracking
@@ -35,12 +37,13 @@ type Processor struct {
 }
 
 // NewProcessor creates a new processor.
-func NewProcessor(cfg *config.Config, p parser.Parser, cvClient CVClient, sel selector.Selector) *Processor {
+func NewProcessor(cfg *config.Config, p parser.Parser, cvClient CVClient, sel selector.Selector, store *storage.Storage) *Processor {
 	return &Processor{
 		cfg:      cfg,
 		parser:   p,
 		cvClient: cvClient,
 		selector: sel,
+		store:    store,
 		verbose:  cfg.Verbose,
 	}
 }
@@ -176,4 +179,82 @@ func (p *Processor) GetProgress() models.BatchProgress {
 	p.progressMu.Lock()
 	defer p.progressMu.Unlock()
 	return p.progress
+}
+
+// ParseBatch processes files for parsing only and saves results to the database.
+func (p *Processor) ParseBatch(ctx context.Context, filenames []string, parserName string) {
+	p.progress = models.BatchProgress{
+		Total: len(filenames),
+	}
+
+	// Create worker pool
+	jobs := make(chan string, len(filenames))
+	var wg sync.WaitGroup
+
+	// Start workers
+	for i := 0; i < p.cfg.WorkerCount; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for filename := range jobs {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
+				err := p.ProcessFileParseOnly(ctx, filename, parserName)
+
+				p.progressMu.Lock()
+				p.progress.Processed++
+				if err == nil {
+					p.progress.Successful++
+				} else {
+					p.progress.Failed++
+				}
+				p.progressMu.Unlock()
+			}
+		}(i)
+	}
+
+	// Send jobs
+	for _, filename := range filenames {
+		jobs <- filename
+	}
+	close(jobs)
+
+	// Wait for completion
+	wg.Wait()
+}
+
+// ProcessFileParseOnly parses a single file and saves the result to the database.
+func (p *Processor) ProcessFileParseOnly(ctx context.Context, filename string, parserName string) error {
+	if p.verbose {
+		log.Printf("Parsing filename: %s", filename)
+	}
+
+	parsed, err := p.parser.Parse(ctx, &models.ParsedFilename{OriginalFilename: filename})
+	if err != nil {
+		if p.verbose {
+			log.Printf("Error parsing %s: %v", filename, err)
+		}
+		return err
+	}
+
+	if p.verbose {
+		log.Printf("Parsed: title=%q issue=%q", parsed.Title, parsed.IssueNumber)
+	}
+
+	if p.store != nil {
+		if err := p.store.SaveParsedFilename(ctx, parsed, parserName); err != nil {
+			if p.verbose {
+				log.Printf("Error saving parsed result for %s: %v", filename, err)
+			}
+			return err
+		}
+	} else {
+		log.Printf("Warning: No storage configured, result not saved for %s", filename)
+	}
+
+	return nil
 }

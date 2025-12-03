@@ -37,6 +37,8 @@ func main() {
 	interactive := flag.Bool("interactive", false, "Enable interactive TUI mode")
 	singleFile := flag.String("file", "", "Process a single filename (for testing)")
 	generateConfig := flag.Bool("generate-config", false, "Generate a sample config file")
+	parserName := flag.String("parser", "", "Parser to use: regex or llm (enables parse-only mode)")
+	dbPath := flag.String("db", "comics.db", "Database path for storing results")
 
 	flag.Parse()
 
@@ -88,10 +90,21 @@ func main() {
 
 	cvClient := comicvine.NewClient(cfg, httpClient)
 
-	// Create parsers
-	regexParser := parser.NewRegexParser()
-	llmParser := parser.NewLLMParser(llmClient, cfg.RetryAttempts, cfg.RetryDelaySeconds)
-	chainParser := parser.NewChainParser(regexParser, llmParser)
+	// Create parser
+	var p parser.Parser
+	if *parserName != "" {
+		switch *parserName {
+		case "regex":
+			p = parser.NewRegexParser()
+		case "llm":
+			p = parser.NewLLMParser(llmClient, cfg.RetryAttempts, cfg.RetryDelaySeconds)
+		default:
+			log.Fatalf("Unknown parser: %s (must be regex or llm)", *parserName)
+		}
+	} else {
+		// Since chain parser is removed, we require a parser to be specified
+		log.Fatal("Please specify a parser using -parser (regex or llm)")
+	}
 
 	// Create selector
 	var sel selector.Selector
@@ -101,8 +114,19 @@ func main() {
 		sel = selector.NewLLMSelector(llmClient, cfg)
 	}
 
+	// Initialize Storage if parsing is enabled
+	var store *storage.Storage
+	if *parserName != "" {
+		var err error
+		store, err = storage.NewStorage(*dbPath)
+		if err != nil {
+			log.Fatalf("Error initializing storage: %v", err)
+		}
+		defer store.Close()
+	}
+
 	// Create processor
-	proc := processor.NewProcessor(cfg, chainParser, cvClient, sel)
+	proc := processor.NewProcessor(cfg, p, cvClient, sel, store)
 	defer proc.Close()
 
 	// Setup context with cancellation
@@ -120,6 +144,17 @@ func main() {
 
 	// Process single file or batch
 	if *singleFile != "" {
+		if *parserName != "" {
+			// Parse only single file
+			fmt.Printf("Parsing single file with %s: %s\n", *parserName, *singleFile)
+			err := proc.ProcessFileParseOnly(ctx, *singleFile, *parserName)
+			if err != nil {
+				log.Fatalf("Error parsing file: %v", err)
+			}
+			fmt.Println("Result saved to database.")
+			return
+		}
+		// Full processing (currently unreachable due to log.Fatal above if parser not set)
 		processSingle(ctx, proc, *singleFile)
 		return
 	}
@@ -127,13 +162,16 @@ func main() {
 	if *inputFile == "" {
 		// Check for filenames from stdin or command line args
 		if flag.NArg() > 0 {
-			// Process files from command line arguments
+			if *parserName != "" {
+				proc.ParseBatch(ctx, flag.Args(), *parserName)
+				return
+			}
 			processBatch(ctx, proc, cfg, flag.Args())
 		} else {
 			flag.Usage()
 			fmt.Println("\nExamples:")
-			fmt.Println("  comic-parser -file \"Amazing Spider-Man 001 (2018).cbz\"")
-			fmt.Println("  comic-parser -input filenames.txt -output results.json")
+			fmt.Println("  comic-parser -parser regex -file \"Amazing Spider-Man 001 (2018).cbz\"")
+			fmt.Println("  comic-parser -parser llm -input filenames.txt")
 			fmt.Println("  comic-parser -generate-config")
 			os.Exit(1)
 		}
@@ -151,6 +189,26 @@ func main() {
 	}
 
 	fmt.Printf("Loaded %d filenames to process\n", len(filenames))
+
+	if *parserName != "" {
+		// Parse Only Mode
+		fmt.Printf("Starting parse-only batch with parser: %s\n", *parserName)
+		startTime := time.Now()
+		proc.ParseBatch(ctx, filenames, *parserName)
+
+		elapsed := time.Since(startTime)
+		progress := proc.GetProgress()
+		fmt.Printf("\n=== Summary ===\n")
+		fmt.Printf("Total processed: %d\n", progress.Processed)
+		fmt.Printf("Successful:      %d\n", progress.Successful)
+		fmt.Printf("Failed:          %d\n", progress.Failed)
+		fmt.Printf("Time elapsed:    %s\n", elapsed.Round(time.Second))
+		if progress.Processed > 0 {
+			fmt.Printf("Avg time/file:   %s\n", (elapsed / time.Duration(progress.Processed)).Round(time.Millisecond))
+		}
+		return
+	}
+
 	processBatch(ctx, proc, cfg, filenames)
 }
 

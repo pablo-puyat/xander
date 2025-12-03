@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS processing_results (
 
 CREATE TABLE IF NOT EXISTS parsed_filenames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    processing_result_id INTEGER NOT NULL,
+    processing_result_id INTEGER,
+    parser_name TEXT NOT NULL DEFAULT 'unknown',
     original_filename TEXT NOT NULL,
     title TEXT NOT NULL,
     issue_number TEXT NOT NULL,
@@ -61,7 +62,8 @@ CREATE TABLE IF NOT EXISTS parsed_filenames (
     volume_number TEXT,
     confidence TEXT NOT NULL,
     notes TEXT,
-    FOREIGN KEY (processing_result_id) REFERENCES processing_results(id) ON DELETE CASCADE
+    FOREIGN KEY (processing_result_id) REFERENCES processing_results(id) ON DELETE CASCADE,
+    UNIQUE(original_filename, parser_name)
 );
 `
 
@@ -190,7 +192,8 @@ func (s *Storage) SaveResult(ctx context.Context, result *models.ProcessingResul
 	if result.Match != nil {
 		info := result.Match.ParsedInfo
 		err = qtx.CreateParsedFilename(ctx, db.CreateParsedFilenameParams{
-			ProcessingResultID: resID,
+			ProcessingResultID: sql.NullInt64{Int64: resID, Valid: true},
+			ParserName:         "pipeline",
 			OriginalFilename:   info.OriginalFilename,
 			Title:              info.Title,
 			IssueNumber:        info.IssueNumber,
@@ -206,4 +209,19 @@ func (s *Storage) SaveResult(ctx context.Context, result *models.ProcessingResul
 	}
 
 	return tx.Commit()
+}
+
+func (s *Storage) SaveParsedFilename(ctx context.Context, info *models.ParsedFilename, parserName string) error {
+	return s.q.CreateParsedFilename(ctx, db.CreateParsedFilenameParams{
+		ProcessingResultID: sql.NullInt64{Valid: false},
+		ParserName:         parserName,
+		OriginalFilename:   info.OriginalFilename,
+		Title:              info.Title,
+		IssueNumber:        info.IssueNumber,
+		Year:               sql.NullString{String: info.Year, Valid: info.Year != ""},
+		Publisher:          sql.NullString{String: info.Publisher, Valid: info.Publisher != ""},
+		VolumeNumber:       sql.NullString{String: info.VolumeNumber, Valid: info.VolumeNumber != ""},
+		Confidence:         info.Confidence,
+		Notes:              sql.NullString{String: info.Notes, Valid: info.Notes != ""},
+	})
 }

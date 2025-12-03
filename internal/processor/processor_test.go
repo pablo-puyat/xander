@@ -138,7 +138,7 @@ func TestProcessor_ProcessFile(t *testing.T) {
 				},
 			}
 
-			proc := NewProcessor(cfg, parserMock, cvClient, sel)
+			proc := NewProcessor(cfg, parserMock, cvClient, sel, nil)
 			ctx := context.Background()
 
 			result, err := proc.ProcessFile(ctx, tt.filename)

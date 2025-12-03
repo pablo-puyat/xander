@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS processing_results (
 
 CREATE TABLE IF NOT EXISTS parsed_filenames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    processing_result_id INTEGER NOT NULL,
+    processing_result_id INTEGER,
+    parser_name TEXT NOT NULL DEFAULT 'unknown',
     original_filename TEXT NOT NULL,
     title TEXT NOT NULL,
     issue_number TEXT NOT NULL,
@@ -46,5 +47,6 @@ CREATE TABLE IF NOT EXISTS parsed_filenames (
     volume_number TEXT,
     confidence TEXT NOT NULL,
     notes TEXT,
-    FOREIGN KEY (processing_result_id) REFERENCES processing_results(id) ON DELETE CASCADE
+    FOREIGN KEY (processing_result_id) REFERENCES processing_results(id) ON DELETE CASCADE,
+    UNIQUE(original_filename, parser_name)
 );
