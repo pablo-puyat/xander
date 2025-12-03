@@ -40,15 +40,11 @@ def parse_diff_to_changed_lines(patch):
     return changed_lines
 
 
-def get_ai_review(filename, patch, api_key):
+def get_ai_review(filename, patch):
     """
     Sends the patch to Gemini for review.
     """
-    genai.configure(api_key=api_key)
 
-    # Use a model that is good at code. Gemini 1.5 Flash is fast and good.
-    # Using 'gemini-pro-latest' to ensure we get the latest supported version
-    # and avoid potential 404s with the base alias.
     model = genai.GenerativeModel("gemini-pro-latest")
 
     prompt = f"""
@@ -109,6 +105,8 @@ def main():
         print("Error: GITHUB_TOKEN and GEMINI_API_KEY are required.")
         return
 
+    genai.configure(api_key=gemini_api_key)
+
     # Get context from event
     with open(os.environ["GITHUB_EVENT_PATH"], "r") as f:
         event_data = json.load(f)
@@ -150,7 +148,7 @@ def main():
 
         changed_lines = parse_diff_to_changed_lines(file.patch)
 
-        review_items = get_ai_review(file.filename, file.patch, gemini_api_key)
+        review_items = get_ai_review(file.filename, file.patch)
 
         for item in review_items:
             line = item.get("line")
