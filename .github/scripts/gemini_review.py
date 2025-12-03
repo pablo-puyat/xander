@@ -44,17 +44,37 @@ def get_ai_review(filename, patch):
     """
     Sends the patch to Gemini for review.
     """
-
-    model = genai.GenerativeModel("gemini-pro-latest")
+    model = genai.GenerativeModel("gemini-1.5-flash")
 
     prompt = f"""
-You are an expert Senior Software Engineer. Your task is to review the following code changes (git diff) for file: {filename}.
+You are a strict Senior Go (Golang) Open Source Maintainer who follows the "Clean Code" philosophy.
+Your goal is to ensure code is readable, idiomatic, and secure.
 
-Focus on:
-1. Professional code style and formatting.
-2. Idiomatic patterns and structures for Go language.
-3. Potential bugs or security issues.
-4. Improvements to readability.
+Review the following git diff for file: {filename}.
+
+**Your Philosophy:**
+We believe in **Self-Documenting Code**.
+- Do NOT ask for comments to explain "what" the code is doing.
+- If code is hard to understand, suggest **renaming variables** or **refactoring logic** to make it clearer, rather than suggesting adding a comment.
+- Only suggest comments if there is a complex "Why" (business context) that cannot be expressed in code.
+
+**Your Checklist:**
+1. **Naming & Clarity:**
+   - Flag ambiguous names (e.g., `data`, `x`, `temp`).
+   - Ensure function names clearly describe their action.
+   - Suggest splitting functions if they are doing too many things (Single Responsibility Principle).
+
+2. **Go Idioms:**
+   - Ensure "Exported" vs "unexported" visibility is used correctly.
+   - Check that `fmt.Errorf` with `%w` is used for error wrapping.
+   - Flag ignored errors (`_`) unless justified.
+
+3. **Concurrency & Safety:**
+   - Look for race conditions.
+   - Ensure Mutexes are locked/unlocked correctly.
+
+4. **Configuration:**
+   - **CRITICAL:** Flag any hardcoded secrets or absolute file paths.
 
 Output strictly valid JSON in the following format:
 [
@@ -64,9 +84,10 @@ Output strictly valid JSON in the following format:
   }}
 ]
 
-Only provide comments for lines that are ADDED or MODIFIED (lines starting with '+').
-If the code looks good or the changes are trivial/safe, return an empty list [].
-Do not include markdown formatting like ```json``` in your response, just the raw JSON string.
+RULES:
+- Only provide comments for lines that are ADDED or MODIFIED.
+- If the code is clean and readable, return an empty list [].
+- Do not include markdown formatting.
 
 Diff:
 {patch}
@@ -86,14 +107,6 @@ Diff:
         return json.loads(text.strip())
     except Exception as e:
         print(f"Error generating/parsing review for {filename}: {e}")
-        if "404" in str(e):
-            try:
-                print("Available models:")
-                for m in genai.list_models():
-                    if "generateContent" in m.supported_generation_methods:
-                        print(f" - {m.name}")
-            except Exception as e2:
-                print(f"Could not list models: {e2}")
         return []
 
 
@@ -111,15 +124,13 @@ def main():
     with open(os.environ["GITHUB_EVENT_PATH"], "r") as f:
         event_data = json.load(f)
 
-    repo_name = os.environ["GITHUB_REPOSITORY"]
-
-    # Initialize GitHub Auth once
     auth = Auth.Token(github_token)
     g = Github(auth=auth)
 
-    # Check for PR event and retrieve PR object immediately
     if "pull_request" in event_data:
         pr_number = event_data["pull_request"]["number"]
+        repo_name = os.environ["GITHUB_REPOSITORY"]
+
         repo = g.get_repo(repo_name)
         pr = repo.get_pull(pr_number)
     else:
