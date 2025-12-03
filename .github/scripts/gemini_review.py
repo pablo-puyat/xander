@@ -111,20 +111,20 @@ def main():
     with open(os.environ["GITHUB_EVENT_PATH"], "r") as f:
         event_data = json.load(f)
 
-    # Handle different event types to find PR number
-    pr_number = None
     repo_name = os.environ["GITHUB_REPOSITORY"]
 
+    # Initialize GitHub Auth once
+    auth = Auth.Token(github_token)
+    g = Github(auth=auth)
+
+    # Check for PR event and retrieve PR object immediately
     if "pull_request" in event_data:
         pr_number = event_data["pull_request"]["number"]
+        repo = g.get_repo(repo_name)
+        pr = repo.get_pull(pr_number)
     else:
         print("Not a pull request event. Exiting.")
         return
-
-    auth = Auth.Token(github_token)
-    g = Github(auth=auth)
-    repo = g.get_repo(repo_name)
-    pr = repo.get_pull(pr_number)
 
     print(f"Reviewing PR #{pr_number}: {pr.title}")
 
