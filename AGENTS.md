@@ -11,13 +11,13 @@ This is a Go application that parses comic book archive filenames (CBR/CBZ) and 
 go build -o comic-parser ./cmd/comic-parser
 
 # Test single file
-./comic-parser -file "Amazing Spider-Man 001 (2018).cbz" -verbose
+./comic-parser parse --file "Amazing Spider-Man 001 (2018).cbz" --verbose
 
 # Batch process
-./comic-parser -input filenames.txt -output results.json
+./comic-parser parse --input filenames.txt --output results.json
 
 # Generate sample config
-./comic-parser -generate-config
+./comic-parser config init
 ```
 
 ## Architecture
@@ -26,7 +26,11 @@ go build -o comic-parser ./cmd/comic-parser
 comic-parser/
 ├── cmd/
 │   └── comic-parser/
-│       └── main.go         # CLI entry point, flag parsing, output handling
+│       ├── main.go         # Application entry point (calls Execute)
+│       ├── root.go         # Root command and persistent flags
+│       ├── parse.go        # Parse command logic
+│       ├── tui.go          # TUI command logic
+│       └── config.go       # Config command logic
 ├── internal/
 │   ├── config/config.go        # Configuration from env vars and JSON file
 │   ├── llm/client.go           # Anthropic API client (Claude)
@@ -110,7 +114,7 @@ Edit `prompts/prompts.go` → `FilenameParsePrompt()`. Add examples to the promp
 Edit `prompts/prompts.go` → `ResultMatchPrompt()`. Adjust the matching rules or add edge cases to the prompt.
 
 ### Adding New Output Formats
-Edit `main.go` → `saveResults()`. Add a new case in the switch statement. Follow the pattern of `saveJSON()` and `saveCSV()`.
+Edit `cmd/comic-parser/utils.go` → `saveResults()`. Add a new case in the switch statement. Follow the pattern of `saveJSON()` and `saveCSV()`.
 
 ### Changing ComicVine Search Behavior
 Edit `comicvine/client.go` → `SearchIssues()` or `searchByVolumeAndIssue()`. The search strategy is here.
@@ -204,7 +208,7 @@ httpReq.Header.Set("anthropic-version", "2023-06-01")
 ### "Add a new field to track (e.g., variant covers)"
 1. Add field to `ParsedFilename` in `models/models.go`
 2. Update `FilenameParsePrompt()` to extract it
-3. Update output functions in `main.go` if needed
+3. Update output functions in `cmd/comic-parser/utils.go` if needed
 
 ### "Cache ComicVine results to reduce API calls"
 Volume cache already exists in `comicvine/client.go`. Extend the pattern:

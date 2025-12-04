@@ -37,7 +37,6 @@ func NewModel(ctx context.Context, store *storage.Storage, cvClient *comicvine.C
 	}
 
 	return Model{
-		ctx:      ctx,
 		store:    store,
 		cvClient: cvClient,
 		items:    items,
