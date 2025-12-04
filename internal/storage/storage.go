@@ -225,3 +225,26 @@ func (s *Storage) SaveParsedFilename(ctx context.Context, info *models.ParsedFil
 		Notes:              sql.NullString{String: info.Notes, Valid: info.Notes != ""},
 	})
 }
+
+func (s *Storage) ListParsedFilenames(ctx context.Context) ([]*models.ParsedFilename, error) {
+	dbItems, err := s.q.ListParsedFilenames(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []*models.ParsedFilename
+	for _, dbItem := range dbItems {
+		item := &models.ParsedFilename{
+			OriginalFilename: dbItem.OriginalFilename,
+			Title:            dbItem.Title,
+			IssueNumber:      dbItem.IssueNumber,
+			Year:             dbItem.Year.String,
+			Publisher:        dbItem.Publisher.String,
+			VolumeNumber:     dbItem.VolumeNumber.String,
+			Confidence:       dbItem.Confidence,
+			Notes:            dbItem.Notes.String,
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
