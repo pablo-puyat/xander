@@ -126,10 +126,17 @@ func TestModel_Navigate(t *testing.T) {
 	defer store.Close()
 
 	// Add two items
-	store.SaveParsedFilename(context.Background(), &models.ParsedFilename{OriginalFilename: "1.cbr", Title: "1"}, "test")
-	store.SaveParsedFilename(context.Background(), &models.ParsedFilename{OriginalFilename: "2.cbr", Title: "2"}, "test")
+	if err := store.SaveParsedFilename(context.Background(), &models.ParsedFilename{OriginalFilename: "1.cbr", Title: "1"}, "test"); err != nil {
+		t.Fatalf("Failed to save item 1: %v", err)
+	}
+	if err := store.SaveParsedFilename(context.Background(), &models.ParsedFilename{OriginalFilename: "2.cbr", Title: "2"}, "test"); err != nil {
+		t.Fatalf("Failed to save item 2: %v", err)
+	}
 
-	model, _ := NewModel(context.Background(), store, nil)
+	model, err := NewModel(context.Background(), store, nil)
+	if err != nil {
+		t.Fatalf("Failed to create new model: %v", err)
+	}
 
 	// Check initial index
 	if model.index != 0 {
@@ -137,24 +144,24 @@ func TestModel_Navigate(t *testing.T) {
 	}
 
 	// Next
-	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
-	m := updatedModel.(Model)
-	if m.index != 1 {
-		t.Errorf("Expected index 1, got %d", m.index)
+	updatedModelRaw, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	modelAfterNext := updatedModelRaw.(Model)
+	if modelAfterNext.index != 1 {
+		t.Errorf("Expected index 1, got %d", modelAfterNext.index)
 	}
 
 	// Next again (should stay at 1)
-	updatedModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
-	m = updatedModel.(Model)
-	if m.index != 1 {
-		t.Errorf("Expected index 1, got %d", m.index)
+	updatedModelRaw2, _ := modelAfterNext.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	modelAfterSecondNext := updatedModelRaw2.(Model)
+	if modelAfterSecondNext.index != 1 {
+		t.Errorf("Expected index 1, got %d", modelAfterSecondNext.index)
 	}
 
 	// Prev
-	updatedModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
-	m = updatedModel.(Model)
-	if m.index != 0 {
-		t.Errorf("Expected index 0, got %d", m.index)
+	updatedModelRaw3, _ := modelAfterSecondNext.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	modelAfterPrev := updatedModelRaw3.(Model)
+	if modelAfterPrev.index != 0 {
+		t.Errorf("Expected index 0, got %d", modelAfterPrev.index)
 	}
 }
 
@@ -167,14 +174,20 @@ func TestModel_View(t *testing.T) {
 	}
 	defer store.Close()
 
-	store.SaveParsedFilename(context.Background(), &models.ParsedFilename{
+	if err := store.SaveParsedFilename(context.Background(), &models.ParsedFilename{
 		OriginalFilename: "ViewTest.cbr",
 		Title:            "View Test",
 		IssueNumber:      "1",
 		Confidence:       "1.0",
-	}, "test")
+	}, "test"); err != nil {
+		t.Fatalf("Failed to save parsed filename: %v", err)
+	}
 
-	model, _ := NewModel(context.Background(), store, nil)
+	model, err := NewModel(context.Background(), store, nil)
+	if err != nil {
+		t.Fatalf("Failed to create new model: %v", err)
+	}
+
 	view := model.View()
 
 	if !strings.Contains(view, "ViewTest.cbr") {
