@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"comic-parser/internal/comicvine"
 	"comic-parser/internal/models"
@@ -11,7 +12,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const maxSearchResults = 5
+
 type Model struct {
+	ctx      context.Context
 	store    *storage.Storage
 	cvClient *comicvine.Client
 	items    []*models.ParsedFilename
@@ -25,7 +29,7 @@ type Model struct {
 	height int
 }
 
-func NewModel(store *storage.Storage, cvClient *comicvine.Client) (Model, error) {
+func NewModel(ctx context.Context, store *storage.Storage, cvClient *comicvine.Client) (Model, error) {
 	// Load items initially
 	items, err := store.ListParsedFilenames(context.Background())
 	if err != nil {
@@ -45,6 +49,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 type searchMsg struct {
+	id      int // or string, whatever identifies the item
 	results []models.ComicVineIssue
 	err     error
 }
@@ -60,17 +65,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "n", "right", "l":
-			if m.index < len(m.items)-1 {
-				m.index++
-				m.searchResults = nil // Clear search results on nav
-				m.searchErr = nil
-			}
+			m.navigate(1)
 		case "p", "left", "h":
-			if m.index > 0 {
-				m.index--
-				m.searchResults = nil
-				m.searchErr = nil
-			}
+			m.navigate(-1)
 		case "s", "enter": // Search
 			if !m.searching && len(m.items) > 0 {
 				m.searching = true
@@ -78,22 +75,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.searchErr = nil
 				item := m.items[m.index]
 				return m, func() tea.Msg {
-					// Use a new context?
-					results, err := m.cvClient.SearchIssues(context.Background(), item.Title, item.IssueNumber)
-					return searchMsg{results: results, err: err}
+					results, err := m.cvClient.SearchIssues(m.ctx, item.Title, item.IssueNumber)
+					// Pass the item ID back
+					return searchMsg{id: item.ID, results: results, err: err}
 				}
 			}
 		}
 
 	case searchMsg:
-		m.searching = false
-		if msg.err != nil {
-			m.searchErr = msg.err
-		} else {
-			m.searchResults = msg.results
+		if m.index < len(m.items) && m.items[m.index].ID == msg.id {
+			m.searching = false
+			if msg.err != nil {
+				m.searchErr = msg.err
+			} else {
+				m.searchResults = msg.results
+			}
 		}
 	}
-
 	return m, nil
 }
 
@@ -102,40 +100,53 @@ func (m Model) View() string {
 		return "No items found in database.\n\nPress 'q' to quit."
 	}
 
+	var b strings.Builder
+
 	item := m.items[m.index]
 
-	s := fmt.Sprintf("Item %d of %d\n\n", m.index+1, len(m.items))
-	s += fmt.Sprintf("Filename: %s\n", item.OriginalFilename)
-	s += fmt.Sprintf("Title:    %s\n", item.Title)
-	s += fmt.Sprintf("Issue:    %s\n", item.IssueNumber)
-	s += fmt.Sprintf("Year:     %s\n", item.Year)
-	s += fmt.Sprintf("Conf:     %s\n", item.Confidence)
+	// 3. Write directly to the builder using Fprintf
+	fmt.Fprintf(&b, "Item %d of %d\n\n", m.index+1, len(m.items))
+	fmt.Fprintf(&b, "Filename: %s\n", item.OriginalFilename)
+	fmt.Fprintf(&b, "Title:    %s\n", item.Title)
+	fmt.Fprintf(&b, "Issue:    %s\n", item.IssueNumber)
+	fmt.Fprintf(&b, "Year:     %s\n", item.Year)
+	fmt.Fprintf(&b, "Conf:     %s\n", item.Confidence)
+
 	if item.Notes != "" {
-		s += fmt.Sprintf("Notes:    %s\n", item.Notes)
+		fmt.Fprintf(&b, "Notes:    %s\n", item.Notes)
 	}
 
-	s += "\n---\n"
+	b.WriteString("\n---\n")
 
 	if m.searching {
-		s += "Searching ComicVine...\n"
+		b.WriteString("Searching ComicVine...\n")
 	} else if m.searchErr != nil {
-		s += fmt.Sprintf("Error: %v\n", m.searchErr)
+		fmt.Fprintf(&b, "Error: %v\n", m.searchErr)
 	} else if m.searchResults != nil && len(m.searchResults) > 0 {
-		s += fmt.Sprintf("Found %d matches:\n", len(m.searchResults))
+		fmt.Fprintf(&b, "Found %d matches:\n", len(m.searchResults))
 		for i, res := range m.searchResults {
-			if i >= 5 { // Limit to 5
-				s += fmt.Sprintf("... and %d more\n", len(m.searchResults)-5)
+			if i >= 5 {
+				fmt.Fprintf(&b, "... and %d more\n", len(m.searchResults)-maxSearchResults)
 				break
 			}
-			s += fmt.Sprintf("- %s #%s (%s) [%d]\n", res.Volume.Name, res.IssueNumber, res.CoverDate, res.ID)
+			fmt.Fprintf(&b, "- %s #%s (%s) [%d]\n", res.Volume.Name, res.IssueNumber, res.CoverDate, res.ID)
 		}
-	} else if m.searchResults != nil { // empty but not nil means searched and found nothing
-		s += "No matches found on ComicVine.\n"
+	} else if m.searchResults != nil {
+		b.WriteString("No matches found on ComicVine.\n")
 	} else {
-		s += "Press 's' or 'enter' to search ComicVine.\n"
+		b.WriteString("Press 's' or 'enter' to search ComicVine.\n")
 	}
 
-	s += "\n(n)ext, (p)rev, (s)earch, (q)uit\n"
+	b.WriteString("\n(n)ext, (p)rev, (s)earch, (q)uit\n")
 
-	return s
+	return b.String()
+}
+
+func (m *Model) navigate(offset int) {
+	newIndex := m.index + offset
+	if newIndex >= 0 && newIndex < len(m.items) {
+		m.index = newIndex
+		m.searchResults = nil
+		m.searchErr = nil
+	}
 }

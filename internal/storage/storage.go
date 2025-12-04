@@ -228,8 +228,9 @@ func (s *Storage) SaveParsedFilename(ctx context.Context, info *models.ParsedFil
 
 func (s *Storage) ListParsedFilenames(ctx context.Context) ([]*models.ParsedFilename, error) {
 	dbItems, err := s.q.ListParsedFilenames(ctx)
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("storage: list parsed filenames: %w", err)
 	}
 
 	var items []*models.ParsedFilename

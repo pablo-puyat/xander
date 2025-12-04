@@ -148,7 +148,7 @@ func main() {
 
 	if *tuiMode {
 		// Initialize TUI
-		model, err := tui.NewModel(store, cvClient)
+		model, err := tui.NewModel(ctx, store, cvClient)
 		if err != nil {
 			log.Fatalf("Error initializing TUI: %v", err)
 		}
