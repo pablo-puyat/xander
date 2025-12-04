@@ -49,11 +49,22 @@ DELETE FROM parsed_filenames WHERE processing_result_id = ?;
 
 -- name: CreateParsedFilename :exec
 INSERT INTO parsed_filenames (
-    processing_result_id, original_filename, title, issue_number, year,
+    processing_result_id, parser_name, original_filename, title, issue_number, year,
     publisher, volume_number, confidence, notes
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?
-);
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+) ON CONFLICT(original_filename, parser_name) DO UPDATE SET
+    processing_result_id = excluded.processing_result_id,
+    title = excluded.title,
+    issue_number = excluded.issue_number,
+    year = excluded.year,
+    publisher = excluded.publisher,
+    volume_number = excluded.volume_number,
+    confidence = excluded.confidence,
+    notes = excluded.notes;
 
 -- name: GetProcessingResult :one
 SELECT * FROM processing_results WHERE filename = ?;
+
+-- name: ListParsedFilenames :many
+SELECT * FROM parsed_filenames ORDER BY id DESC;

@@ -44,7 +44,7 @@ def get_ai_review(filename, patch):
     """
     Sends the patch to Gemini for review.
     """
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-pro-latest")
 
     prompt = f"""
 You are a strict Senior Go (Golang) Open Source Maintainer who follows the "Clean Code" philosophy.

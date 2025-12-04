@@ -215,3 +215,42 @@ func (q *Queries) UpsertVolume(ctx context.Context, arg UpsertVolumeParams) erro
 	)
 	return err
 }
+
+const listParsedFilenames = `-- name: ListParsedFilenames :many
+SELECT id, processing_result_id, parser_name, original_filename, title, issue_number, year, publisher, volume_number, confidence, notes FROM parsed_filenames ORDER BY id DESC
+`
+
+func (q *Queries) ListParsedFilenames(ctx context.Context) ([]ParsedFilename, error) {
+	rows, err := q.db.QueryContext(ctx, listParsedFilenames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ParsedFilename
+	for rows.Next() {
+		var i ParsedFilename
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProcessingResultID,
+			&i.ParserName,
+			&i.OriginalFilename,
+			&i.Title,
+			&i.IssueNumber,
+			&i.Year,
+			&i.Publisher,
+			&i.VolumeNumber,
+			&i.Confidence,
+			&i.Notes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -24,6 +24,9 @@ import (
 	"comic-parser/internal/processor"
 	"comic-parser/internal/selector"
 	"comic-parser/internal/storage"
+	"comic-parser/internal/tui"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
@@ -39,6 +42,7 @@ func main() {
 	generateConfig := flag.Bool("generate-config", false, "Generate a sample config file")
 	parserName := flag.String("parser", "", "Parser to use: regex or llm (enables parse-only mode)")
 	dbPath := flag.String("db", "comics.db", "Database path for storing results")
+	tuiMode := flag.Bool("tui", false, "Launch TUI to view parsed results")
 
 	flag.Parse()
 
@@ -114,9 +118,9 @@ func main() {
 		sel = selector.NewLLMSelector(llmClient, cfg)
 	}
 
-	// Initialize Storage if parsing is enabled
+	// Initialize Storage if parsing is enabled or TUI mode
 	var store *storage.Storage
-	if *parserName != "" {
+	if *parserName != "" || *tuiMode {
 		var err error
 		store, err = storage.NewStorage(*dbPath)
 		if err != nil {
@@ -141,6 +145,20 @@ func main() {
 		fmt.Println("\nReceived interrupt signal, shutting down gracefully...")
 		cancel()
 	}()
+
+	if *tuiMode {
+		// Initialize TUI
+		model, err := tui.NewModel(ctx, store, cvClient)
+		if err != nil {
+			log.Fatalf("Error initializing TUI: %v", err)
+		}
+
+		p := tea.NewProgram(model)
+		if _, err := p.Run(); err != nil {
+			log.Fatalf("Error running TUI: %v", err)
+		}
+		return
+	}
 
 	// Process single file or batch
 	if *singleFile != "" {
