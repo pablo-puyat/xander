@@ -49,7 +49,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 type searchMsg struct {
-	id      int // or string, whatever identifies the item
+	id      string
 	results []models.ComicVineIssue
 	err     error
 }
@@ -76,14 +76,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				item := m.items[m.index]
 				return m, func() tea.Msg {
 					results, err := m.cvClient.SearchIssues(m.ctx, item.Title, item.IssueNumber)
-					// Pass the item ID back
-					return searchMsg{id: item.ID, results: results, err: err}
+					return searchMsg{id: item.OriginalFilename, results: results, err: err}
 				}
 			}
 		}
 
 	case searchMsg:
-		if m.index < len(m.items) && m.items[m.index].ID == msg.id {
+		if m.index < len(m.items) && m.items[m.index].OriginalFilename == msg.id {
 			m.searching = false
 			if msg.err != nil {
 				m.searchErr = msg.err
@@ -122,7 +121,7 @@ func (m Model) View() string {
 		b.WriteString("Searching ComicVine...\n")
 	} else if m.searchErr != nil {
 		fmt.Fprintf(&b, "Error: %v\n", m.searchErr)
-	} else if m.searchResults != nil && len(m.searchResults) > 0 {
+	} else if len(m.searchResults) > 0 {
 		fmt.Fprintf(&b, "Found %d matches:\n", len(m.searchResults))
 		for i, res := range m.searchResults {
 			if i >= 5 {
